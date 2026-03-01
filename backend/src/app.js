@@ -29,6 +29,7 @@ app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', require('./modules/auth/auth.routes'));
+app.use('/api/flights', require('./modules/flights/flights.routes'));
 
 // Health check
 app.get('/', (req, res) => {
