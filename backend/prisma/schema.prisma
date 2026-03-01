@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  password       String
+  firstName      String
+  lastName       String
+  phone          String?
+  nationality    String    @default("NG")
+  dateOfBirth    DateTime?
+  passportNumber String?
+  passportExpiry DateTime?
+  isVerified     Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  role           Role      @default(USER)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  bookings       Booking[]
+  payments       Payment[]
+  @@map("users")
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  bookingReference String        @unique
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  flightData       Json
+  origin           String
+  destination      String
+  departureDate    DateTime
+  arrivalDate      DateTime
+  airline          String
+  flightNumber     String
+  cabinClass       CabinClass    @default(ECONOMY)
+  tripType         TripType      @default(ONE_WAY)
+  baseFare         Float
+  taxes            Float
+  serviceFee       Float
+  totalAmount      Float
+  currency         String        @default("NGN")
+  status           BookingStatus @default(PENDING)
+  amadeusOrderId   String?
+  pnrCode          String?
+  ticketNumbers    String[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  passengers       Passenger[]
+  payment          Payment?
+  @@map("bookings")
+}
+
+model Passenger {
+  id             String        @id @default(uuid())
+  bookingId      String
+  booking        Booking       @relation(fields: [bookingId], references: [id])
+  type           PassengerType @default(ADULT)
+  title          String
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime
+  nationality    String
+  passportNumber String?
+  passportExpiry DateTime?
+  email          String?
+  phone          String?
+  createdAt      DateTime      @default(now())
+  @@map("passengers")
+}
+
+model Payment {
+  id                String          @id @default(uuid())
+  bookingId         String          @unique
+  booking           Booking         @relation(fields: [bookingId], references: [id])
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  amount            Float
+  currency          String          @default("NGN")
+  provider          PaymentProvider
+  providerReference String?
+  providerResponse  Json?
+  status            PaymentStatus   @default(PENDING)
+  paidAt            DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  @@map("payments")
+}
+
+model Airport {
+  id          String  @id @default(uuid())
+  iataCode    String  @unique
+  name        String
+  city        String
+  country     String
+  countryCode String
+  timezone    String
+  isActive    Boolean @default(true)
+  @@map("airports")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPPORT
+}
+
+enum BookingStatus {
+  PENDING
+  PAYMENT_PENDING
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  STRIPE
+}
+
+enum PassengerType {
+  ADULT
+  CHILD
+  INFANT
+}
+
+enum CabinClass {
+  ECONOMY
+  PREMIUM_ECONOMY
+  BUSINESS
+  FIRST
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+}
