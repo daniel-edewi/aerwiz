@@ -1,3 +1,4 @@
+import useAuthStore from '../store/authStore';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
@@ -6,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Plane, Search, Calendar, Users } from 'lucide-react';
 
 const HomePage = () => {
+    const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const { searchParams, setSearchParams, setSearchResults, setIsSearching } = useFlightStore();
   const [loading, setLoading] = useState(false);
@@ -47,9 +49,15 @@ const HomePage = () => {
           <span className="text-white text-2xl font-bold">Aerwiz</span>
         </div>
         <div className="flex space-x-4">
-          <button onClick={() => navigate('/login')} className="text-white hover:text-blue-200 font-medium">Login</button>
-          <button onClick={() => navigate('/register')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">Sign Up</button>
-        </div>
+  {isAuthenticated ? (
+    <button onClick={() => navigate('/dashboard')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">My Account</button>
+  ) : (
+    <>
+      <button onClick={() => navigate('/login')} className="text-white hover:text-blue-200 font-medium">Login</button>
+      <button onClick={() => navigate('/register')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">Sign Up</button>
+    </>
+  )}
+</div>
       </nav>
 
       {/* Hero */}
