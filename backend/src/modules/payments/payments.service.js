@@ -1,3 +1,4 @@
+const { sendPaymentConfirmationEmail } = require('../../utils/emailService');
 const https = require('https');
 const prisma = require('../../config/prisma');
 
@@ -115,6 +116,12 @@ const verifyPayment = async (reference) => {
       where: { id: payment.bookingId },
       data: { status: 'PAYMENT_PENDING' }
     });
+
+    try {
+  const user = await prisma.user.findUnique({ where: { id: payment.userId } });
+  await sendPaymentConfirmationEmail(user, payment.booking, payment);
+} catch (e) { console.log('Email error:', e.message); }
+
     return {
       success: true,
       message: 'Payment successful',

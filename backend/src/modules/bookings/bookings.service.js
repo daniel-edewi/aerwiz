@@ -1,3 +1,4 @@
+const { sendBookingConfirmationEmail } = require('../../utils/emailService');
 const prisma = require('../../config/prisma');
 const { v4: uuidv4 } = require('uuid');
 
@@ -61,6 +62,10 @@ const createBooking = async (userId, bookingData) => {
       passengers: true
     }
   });
+  try {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  await sendBookingConfirmationEmail(user, booking);
+} catch (e) { console.log('Email error:', e.message); }
 
   return booking;
 };

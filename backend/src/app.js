@@ -32,6 +32,7 @@ app.use('/api/auth', require('./modules/auth/auth.routes'));
 app.use('/api/flights', require('./modules/flights/flights.routes'));
 app.use('/api/bookings', require('./modules/bookings/bookings.routes'));
 app.use('/api/payments', require('./modules/payments/payments.routes'));
+app.use('/api/admin', require('./modules/admin/admin.routes'));
 
 // Health check
 app.get('/', (req, res) => {
@@ -43,6 +44,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Test email
+app.get('/test-email', async (req, res) => {
+  try {
+    const { sendWelcomeEmail } = require('./utils/emailService');
+    await sendWelcomeEmail({ firstName: 'Daniel', email: 'daniel.edewi90@gmail.com' });
+    res.json({ success: true, message: 'Email sent!' });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({

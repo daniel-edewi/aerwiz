@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const prisma = require('../../config/prisma');
 const { generateTokens } = require('../../utils/generateToken');
+const { sendWelcomeEmail } = require('../../utils/emailService');
 
 const register = async ({ email, password, firstName, lastName, phone }) => {
   const existingUser = await prisma.user.findUnique({
@@ -67,6 +68,7 @@ const login = async ({ email, password }) => {
     createdAt: user.createdAt
   };
 
+  try { await sendWelcomeEmail(user); } catch (e) { console.log('Email error:', e.message); }
   return { user: userWithoutPassword, ...tokens };
 };
 
