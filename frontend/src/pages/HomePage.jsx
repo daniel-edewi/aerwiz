@@ -4,33 +4,59 @@ import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users } from 'lucide-react';
+import { Plane, Search, Calendar, Users, Plus, Trash2 } from 'lucide-react';
 
 const HomePage = () => {
-    const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
-  const { searchParams, setSearchParams, setSearchResults, setIsSearching } = useFlightStore();
+  const { searchParams, setSearchParams, setSearchResults, setIsSearching, setMultiCityLeg, addMultiCityLeg, removeMultiCityLeg } = useFlightStore();
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchParams.origin || !searchParams.destination || !searchParams.departureDate) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
     setLoading(true);
     setIsSearching(true);
 
     try {
-      const response = await flightsAPI.search({
-        origin: searchParams.origin.toUpperCase(),
-        destination: searchParams.destination.toUpperCase(),
-        departureDate: searchParams.departureDate,
-        adults: searchParams.adults,
-        cabinClass: searchParams.cabinClass
-      });
-      setSearchResults(response.data.data);
+      let results = [];
+
+      if (searchParams.tripType === 'MULTI_CITY') {
+        const legs = searchParams.multiCityLegs;
+        if (legs.some(l => !l.origin || !l.destination || !l.departureDate)) {
+          toast.error('Please fill in all flight legs');
+          setLoading(false);
+          setIsSearching(false);
+          return;
+        }
+        const allResults = await Promise.all(
+          legs.map(leg => flightsAPI.search({
+            origin: leg.origin.toUpperCase(),
+            destination: leg.destination.toUpperCase(),
+            departureDate: leg.departureDate,
+            adults: searchParams.adults,
+            cabinClass: searchParams.cabinClass
+          }).then(r => r.data.data).catch(() => []))
+        );
+        results = allResults.flat();
+      } else {
+        if (!searchParams.origin || !searchParams.destination || !searchParams.departureDate) {
+          toast.error('Please fill in all required fields');
+          setLoading(false);
+          setIsSearching(false);
+          return;
+        }
+        const response = await flightsAPI.search({
+          origin: searchParams.origin.toUpperCase(),
+          destination: searchParams.destination.toUpperCase(),
+          departureDate: searchParams.departureDate,
+          returnDate: searchParams.tripType === 'ROUND_TRIP' ? searchParams.returnDate : undefined,
+          adults: searchParams.adults,
+          cabinClass: searchParams.cabinClass
+        });
+        results = response.data.data;
+      }
+
+      setSearchResults(results);
       navigate('/flights');
     } catch (error) {
       toast.error('No flights found. Please try different dates or destinations.');
@@ -49,15 +75,15 @@ const HomePage = () => {
           <span className="text-white text-2xl font-bold">Aerwiz</span>
         </div>
         <div className="flex space-x-4">
-  {isAuthenticated ? (
-    <button onClick={() => navigate('/dashboard')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">My Account</button>
-  ) : (
-    <>
-      <button onClick={() => navigate('/login')} className="text-white hover:text-blue-200 font-medium">Login</button>
-      <button onClick={() => navigate('/register')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">Sign Up</button>
-    </>
-  )}
-</div>
+          {isAuthenticated ? (
+            <button onClick={() => navigate('/dashboard')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">My Account</button>
+          ) : (
+            <>
+              <button onClick={() => navigate('/login')} className="text-white hover:text-blue-200 font-medium">Login</button>
+              <button onClick={() => navigate('/register')} className="bg-white text-blue-700 px-4 py-2 rounded-lg font-medium hover:bg-blue-50">Sign Up</button>
+            </>
+          )}
+        </div>
       </nav>
 
       {/* Hero */}
@@ -69,124 +95,159 @@ const HomePage = () => {
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-6">
           {/* Trip Type */}
           <div className="flex space-x-4 mb-6">
-            {['ONE_WAY', 'ROUND_TRIP'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setSearchParams({ tripType: type })}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  searchParams.tripType === type
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {type === 'ONE_WAY' ? 'One Way' : 'Round Trip'}
+            {['ONE_WAY', 'ROUND_TRIP', 'MULTI_CITY'].map((type) => (
+              <button key={type} onClick={() => setSearchParams({ tripType: type })}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${searchParams.tripType === type ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                {type === 'ONE_WAY' ? 'One Way' : type === 'ROUND_TRIP' ? 'Round Trip' : 'Multi-City'}
               </button>
             ))}
           </div>
 
           <form onSubmit={handleSearch}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* Origin */}
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-                <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                  <Plane className="w-4 h-4 text-gray-400 mr-2" />
-                  <input
-                    type="text"
-                    placeholder="e.g. LOS"
-                    value={searchParams.origin}
-                    onChange={(e) => setSearchParams({ origin: e.target.value })}
-                    className="w-full outline-none text-gray-700 uppercase"
-                    maxLength={3}
-                  />
-                </div>
-              </div>
+            {/* Multi-City Legs */}
+            {searchParams.tripType === 'MULTI_CITY' ? (
+              <div className="space-y-3 mb-4">
+                {searchParams.multiCityLegs.map((leg, index) => (
+                  <div key={index} className="border border-gray-200 rounded-xl p-4 bg-gray-50 relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-bold text-blue-600">Flight {index + 1}</span>
+                      {index > 1 && (
+                        <button type="button" onClick={() => removeMultiCityLeg(index)} className="text-red-400 hover:text-red-600">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
+                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                          <Plane className="w-4 h-4 text-gray-400 mr-2" />
+                          <input type="text" value={leg.origin}
+                            onChange={(e) => setMultiCityLeg(index, { origin: e.target.value.toUpperCase() })}
+                            className="w-full outline-none text-gray-700 uppercase text-sm" placeholder="LOS" maxLength={3} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
+                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                          <Plane className="w-4 h-4 text-gray-400 mr-2" />
+                          <input type="text" value={leg.destination}
+                            onChange={(e) => setMultiCityLeg(index, { destination: e.target.value.toUpperCase() })}
+                            className="w-full outline-none text-gray-700 uppercase text-sm" placeholder="LHR" maxLength={3} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                          <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                          <input type="date" value={leg.departureDate}
+                            onChange={(e) => setMultiCityLeg(index, { departureDate: e.target.value })}
+                            className="w-full outline-none text-gray-700 text-sm"
+                            min={new Date().toISOString().split('T')[0]} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
 
-              {/* Destination */}
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-                <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                  <Plane className="w-4 h-4 text-gray-400 mr-2 rotate-90" />
-                  <input
-                    type="text"
-                    placeholder="e.g. LHR"
-                    value={searchParams.destination}
-                    onChange={(e) => setSearchParams({ destination: e.target.value })}
-                    className="w-full outline-none text-gray-700 uppercase"
-                    maxLength={3}
-                  />
-                </div>
-              </div>
+                {searchParams.multiCityLegs.length < 5 && (
+                  <button type="button" onClick={addMultiCityLeg}
+                    className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 border border-dashed border-blue-300 rounded-lg w-full justify-center hover:bg-blue-50 transition-colors">
+                    <Plus className="w-4 h-4" />
+                    <span>Add Another Flight</span>
+                  </button>
+                )}
 
-              {/* Departure Date */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
-                <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                  <input
-                    type="date"
-                    value={searchParams.departureDate}
-                    onChange={(e) => setSearchParams({ departureDate: e.target.value })}
-                    className="w-full outline-none text-gray-700"
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-              </div>
-
-              {/* Return Date */}
-              {searchParams.tripType === 'ROUND_TRIP' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Return Date</label>
-                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                    <input
-                      type="date"
-                      value={searchParams.returnDate || ''}
-                      onChange={(e) => setSearchParams({ returnDate: e.target.value })}
-                      className="w-full outline-none text-gray-700"
-                      min={searchParams.departureDate || new Date().toISOString().split('T')[0]}
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                      <Users className="w-4 h-4 text-gray-400 mr-2" />
+                      <select value={searchParams.adults} onChange={(e) => setSearchParams({ adults: parseInt(e.target.value) })}
+                        className="w-full outline-none text-gray-700">
+                        {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cabin Class</label>
+                    <select value={searchParams.cabinClass} onChange={(e) => setSearchParams({ cabinClass: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none text-gray-700">
+                      <option value="ECONOMY">Economy</option>
+                      <option value="PREMIUM_ECONOMY">Premium Economy</option>
+                      <option value="BUSINESS">Business</option>
+                      <option value="FIRST">First Class</option>
+                    </select>
                   </div>
                 </div>
-              )}
-              {/* Passengers */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
-                <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                  <Users className="w-4 h-4 text-gray-400 mr-2" />
-                  <select
-                    value={searchParams.adults}
-                    onChange={(e) => setSearchParams({ adults: parseInt(e.target.value) })}
-                    className="w-full outline-none text-gray-700"
-                  >
-                    {[1,2,3,4,5,6].map(n => (
-                      <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>
-                    ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                    <Plane className="w-4 h-4 text-gray-400 mr-2" />
+                    <input type="text" placeholder="e.g. LOS" value={searchParams.origin}
+                      onChange={(e) => setSearchParams({ origin: e.target.value })}
+                      className="w-full outline-none text-gray-700 uppercase" maxLength={3} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                    <Plane className="w-4 h-4 text-gray-400 mr-2 rotate-90" />
+                    <input type="text" placeholder="e.g. LHR" value={searchParams.destination}
+                      onChange={(e) => setSearchParams({ destination: e.target.value })}
+                      className="w-full outline-none text-gray-700 uppercase" maxLength={3} />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
+                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                    <input type="date" value={searchParams.departureDate}
+                      onChange={(e) => setSearchParams({ departureDate: e.target.value })}
+                      className="w-full outline-none text-gray-700"
+                      min={new Date().toISOString().split('T')[0]} />
+                  </div>
+                </div>
+                {searchParams.tripType === 'ROUND_TRIP' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Return Date</label>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                      <input type="date" value={searchParams.returnDate || ''}
+                        onChange={(e) => setSearchParams({ returnDate: e.target.value })}
+                        className="w-full outline-none text-gray-700"
+                        min={searchParams.departureDate || new Date().toISOString().split('T')[0]} />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
+                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                    <Users className="w-4 h-4 text-gray-400 mr-2" />
+                    <select value={searchParams.adults} onChange={(e) => setSearchParams({ adults: parseInt(e.target.value) })}
+                      className="w-full outline-none text-gray-700">
+                      {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cabin Class</label>
+                  <select value={searchParams.cabinClass} onChange={(e) => setSearchParams({ cabinClass: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none text-gray-700">
+                    <option value="ECONOMY">Economy</option>
+                    <option value="PREMIUM_ECONOMY">Premium Economy</option>
+                    <option value="BUSINESS">Business</option>
+                    <option value="FIRST">First Class</option>
                   </select>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Cabin Class */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cabin Class</label>
-              <select
-                value={searchParams.cabinClass}
-                onChange={(e) => setSearchParams({ cabinClass: e.target.value })}
-                className="border border-gray-300 rounded-lg px-3 py-2 outline-none text-gray-700"
-              >
-                <option value="ECONOMY">Economy</option>
-                <option value="PREMIUM_ECONOMY">Premium Economy</option>
-                <option value="BUSINESS">Business</option>
-                <option value="FIRST">First Class</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors disabled:opacity-50">
               <Search className="w-5 h-5" />
               <span>{loading ? 'Searching...' : 'Search Flights'}</span>
             </button>
