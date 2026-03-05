@@ -8,6 +8,7 @@ import RegisterPage from './pages/RegisterPage';
 import BookingPage from './pages/BookingPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
+import SeatSelectionPage from './pages/SeatSelectionPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/flights" element={<FlightsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/seats" element={<SeatSelectionPage />} />
         <Route path="/book" element={<BookingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/admin" element={<AdminPage />} />

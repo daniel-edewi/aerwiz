@@ -244,7 +244,7 @@ const FlightsPage = () => {
                   <div className="text-right">
                     <p className="text-2xl font-bold text-blue-600">{formatPrice(flight.price.grandTotal)}</p>
                     <p className="text-xs text-gray-400 mb-3">per person</p>
-                    <button onClick={() => { setSelectedFlight(flight); navigate('/book'); }}
+                    <button onClick={() => { setSelectedFlight(flight); navigate('/seats'); }}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors">
                       Select
                     </button>
