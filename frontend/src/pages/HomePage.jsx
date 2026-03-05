@@ -133,6 +133,22 @@ const HomePage = () => {
                 </div>
               </div>
 
+              {/* Return Date */}
+              {searchParams.tripType === 'ROUND_TRIP' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Return Date</label>
+                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                    <input
+                      type="date"
+                      value={searchParams.returnDate || ''}
+                      onChange={(e) => setSearchParams({ returnDate: e.target.value })}
+                      className="w-full outline-none text-gray-700"
+                      min={searchParams.departureDate || new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
+              )}
               {/* Passengers */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>

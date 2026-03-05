@@ -126,6 +126,10 @@ const DashboardPage = () => {
               {tab === 'bookings' ? 'My Bookings' : 'Profile Settings'}
             </button>
           ))}
+          <button onClick={() => navigate('/alerts')}
+            className="pb-3 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">
+            🔔 Price Alerts
+          </button>
         </div>
 
         {/* Bookings Tab */}

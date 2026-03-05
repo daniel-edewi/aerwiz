@@ -175,5 +175,56 @@ const sendPaymentConfirmationEmail = async (user, booking, payment) => {
     `
   });
 };
+const sendPriceAlertEmail = async (user, alert, currentPrice) => {
+  const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
 
-module.exports = { sendWelcomeEmail, sendBookingConfirmationEmail, sendPaymentConfirmationEmail };
+  await transporter.sendMail({
+    from: `"Aerwiz" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `Price Alert! ${alert.origin} → ${alert.destination} is now ${formatPrice(currentPrice)} 🔔`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #7c3aed, #4f46e5); padding: 40px; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 32px;">✈️ Aerwiz</h1>
+          <p style="color: #ddd6fe; margin-top: 8px;">Price Alert Triggered!</p>
+        </div>
+        <div style="background: #ffffff; padding: 40px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="font-size: 48px;">🔔</div>
+          </div>
+          <h2 style="color: #4f46e5; text-align: center;">Great news, ${user.firstName}!</h2>
+          <p style="color: #4b5563; text-align: center;">The price for your route has dropped below your target!</p>
+
+          <div style="background: #f5f3ff; border-radius: 8px; padding: 24px; margin: 24px 0; text-align: center;">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 16px;">
+              <span style="font-size: 24px; font-weight: bold; color: #4f46e5;">${alert.origin}</span>
+              <span style="font-size: 20px;">✈️</span>
+              <span style="font-size: 24px; font-weight: bold; color: #4f46e5;">${alert.destination}</span>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 32px;">
+              <div>
+                <p style="color: #6b7280; margin: 0; font-size: 12px;">YOUR TARGET</p>
+                <p style="color: #dc2626; font-size: 20px; font-weight: bold; margin: 4px 0; text-decoration: line-through;">${formatPrice(alert.targetPrice)}</p>
+              </div>
+              <div>
+                <p style="color: #6b7280; margin: 0; font-size: 12px;">CURRENT PRICE</p>
+                <p style="color: #059669; font-size: 28px; font-weight: bold; margin: 4px 0;">${formatPrice(currentPrice)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #ecfdf5; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
+            <p style="color: #065f46; font-weight: bold; margin: 0;">You save ${formatPrice(alert.targetPrice - currentPrice)}! 🎉</p>
+          </div>
+
+          <div style="text-align: center; margin-top: 32px;">
+            <a href="${process.env.FRONTEND_URL}" style="background: #4f46e5; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Book Now Before Price Changes</a>
+          </div>
+          <p style="color: #9ca3af; font-size: 12px; margin-top: 32px; text-align: center;">© 2026 Aerwiz. All rights reserved.</p>
+        </div>
+      </div>
+    `
+  });
+};
+
+module.exports = module.exports = { sendWelcomeEmail, sendBookingConfirmationEmail, sendPaymentConfirmationEmail, sendPriceAlertEmail };

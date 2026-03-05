@@ -32,6 +32,7 @@ app.use('/api/auth', require('./modules/auth/auth.routes'));
 app.use('/api/flights', require('./modules/flights/flights.routes'));
 app.use('/api/bookings', require('./modules/bookings/bookings.routes'));
 app.use('/api/payments', require('./modules/payments/payments.routes'));
+app.use('/api/alerts', require('./modules/alerts/alerts.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 
 // Health check

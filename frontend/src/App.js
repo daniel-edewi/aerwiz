@@ -9,6 +9,7 @@ import BookingPage from './pages/BookingPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import SeatSelectionPage from './pages/SeatSelectionPage';
+import AlertsPage from './pages/AlertsPage';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/book" element={<BookingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/alerts" element={<AlertsPage />} />
       </Routes>
     </Router>
   );
