@@ -201,6 +201,23 @@ const DashboardPage = () => {
                             Pay Now
                           </button>
                         )}
+
+{(booking.status === 'CONFIRMED' || booking.status === 'COMPLETED') && (
+  <a href={`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/bookings/${booking.id}/boarding-pass`}
+    target="_blank" rel="noreferrer"
+    onClick={(e) => { e.preventDefault(); fetch(`http://localhost:8000/api/bookings/${booking.id}/boarding-pass`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.blob()).then(blob => { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `boarding-pass-${booking.bookingReference}.pdf`; a.click(); }); }}
+    className="bg-green-600 text-white px-4 py-1 rounded-lg text-sm font-medium cursor-pointer">
+    📄 Boarding Pass
+  </a>
+)}
+
+                        {(booking.status === 'CONFIRMED' || booking.status === 'COMPLETED') && (
+  <button onClick={() => {
+    window.open(`${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/bookings/${booking.id}/boarding-pass?token=${token}`, '_blank');
+  }} className="bg-green-600 text-white px-4 py-1 rounded-lg text-sm font-medium flex items-center space-x-1">
+    <span>📄 Boarding Pass</span>
+  </button>
+)}
                         <span className="text-xs text-gray-400 self-center">{booking.passengers?.length} passenger{booking.passengers?.length > 1 ? 's' : ''}</span>
                       </div>
                     </div>
