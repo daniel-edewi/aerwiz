@@ -256,13 +256,16 @@ const HomePage = () => {
       </div>
 
       {/* Features */}
-      <div className="max-w-4xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+      <div className="max-w-4xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
         {[
           { title: 'Best Prices', desc: 'Compare hundreds of airlines to find the lowest fares', icon: '💰' },
           { title: 'Easy Booking', desc: 'Book your flight in minutes with our simple process', icon: '✈️' },
-          { title: 'Pay in Naira', desc: 'Pay securely with Paystack in NGN', icon: '🇳🇬' }
+          { title: 'Pay in Naira', desc: 'Pay securely with Paystack in NGN', icon: '🇳🇬' },
+          { title: 'Baggage Calculator', desc: 'Estimate baggage fees before you fly', icon: '🧳', link: '/baggage' }
         ].map((f) => (
-          <div key={f.title} className="bg-white bg-opacity-10 rounded-xl p-6 text-center text-white">
+          <div key={f.title}
+            onClick={() => f.link && navigate(f.link)}
+            className={`bg-white bg-opacity-10 rounded-xl p-6 text-center text-white ${f.link ? 'cursor-pointer hover:bg-opacity-20 transition-all' : ''}`}>
             <div className="text-4xl mb-3">{f.icon}</div>
             <h3 className="font-bold text-lg mb-2">{f.title}</h3>
             <p className="text-blue-100 text-sm">{f.desc}</p>
