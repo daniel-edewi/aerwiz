@@ -4,7 +4,8 @@ import { bookingsAPI, paymentsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
-import { Plane, ChevronDown } from 'lucide-react';
+import axios from 'axios';
+import { Plane, ChevronDown, Tag } from 'lucide-react';
 
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -13,9 +14,12 @@ const BookingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedFlight } = useFlightStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [promo, setPromo] = useState(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
   const selectedSeat = location.state?.selectedSeat;
 
   const [passenger, setPassenger] = useState({
@@ -38,6 +42,26 @@ const BookingPage = () => {
 
   const segment = selectedFlight.itineraries[0].segments[0];
   const lastSegment = selectedFlight.itineraries[0].segments[selectedFlight.itineraries[0].segments.length - 1];
+  const grandTotal = parseFloat(selectedFlight.price.grandTotal);
+  const finalAmount = promo ? promo.finalAmount : grandTotal;
+
+  const applyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    try {
+      const res = await axios.post('http://localhost:8000/api/promo/validate',
+        { code: promoCode, amount: grandTotal },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPromo(res.data.data);
+      toast.success(`🎉 Promo applied! You save ${formatPrice(res.data.data.discount)}`);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Invalid promo code');
+      setPromo(null);
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   const handleBooking = async (e) => {
     e.preventDefault();
@@ -52,7 +76,9 @@ const BookingPage = () => {
         flightOffer: selectedFlight,
         contactEmail: passenger.email,
         contactPhone: passenger.phone,
-        passengers: [passenger]
+        passengers: [passenger],
+        promoCode: promo?.code || null,
+        discountAmount: promo?.discount || 0
       });
       const booking = bookingResponse.data.data;
       toast.success('Booking created! Redirecting to payment...');
@@ -73,6 +99,29 @@ const BookingPage = () => {
   );
 
   const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm";
+
+  const PriceSummary = ({ mobile = false }) => (
+    <div className={`space-y-1 text-sm ${mobile ? 'border-t pt-3' : 'border-t pt-4 space-y-2'}`}>
+      <div className="flex justify-between">
+        <span className="text-gray-500">Base fare</span>
+        <span>{formatPrice(selectedFlight.price.base)}</span>
+      </div>
+      <div className="flex justify-between">
+        <span className="text-gray-500">Taxes and fees</span>
+        <span>{formatPrice(grandTotal - parseFloat(selectedFlight.price.base))}</span>
+      </div>
+      {promo && (
+        <div className="flex justify-between text-green-600 font-medium">
+          <span>🎟️ {promo.code}</span>
+          <span>-{formatPrice(promo.discount)}</span>
+        </div>
+      )}
+      <div className={`flex justify-between font-bold text-blue-600 pt-1 border-t ${mobile ? '' : 'pt-2'}`}>
+        <span>Total</span>
+        <span>{formatPrice(finalAmount)}</span>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -97,7 +146,8 @@ const BookingPage = () => {
           className="w-full flex items-center justify-between px-4 py-3">
           <div className="flex items-center space-x-3">
             <span className="text-sm text-gray-600">Flight Summary</span>
-            <span className="font-bold text-blue-600 text-sm">{formatPrice(selectedFlight.price.grandTotal)}</span>
+            <span className="font-bold text-blue-600 text-sm">{formatPrice(finalAmount)}</span>
+            {promo && <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">Promo applied</span>}
           </div>
           <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showSummary ? 'rotate-180' : ''}`} />
         </button>
@@ -114,20 +164,7 @@ const BookingPage = () => {
                 <p className="text-gray-500 text-xs">{lastSegment.arrival.iataCode}</p>
               </div>
             </div>
-            <div className="space-y-1 text-sm border-t pt-3">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Base fare</span>
-                <span>{formatPrice(selectedFlight.price.base)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Taxes and fees</span>
-                <span>{formatPrice(parseFloat(selectedFlight.price.grandTotal) - parseFloat(selectedFlight.price.base))}</span>
-              </div>
-              <div className="flex justify-between font-bold text-blue-600 pt-1 border-t">
-                <span>Total</span>
-                <span>{formatPrice(selectedFlight.price.grandTotal)}</span>
-              </div>
-            </div>
+            <PriceSummary mobile={true} />
             {selectedSeat && (
               <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 text-sm">
                 <span className="text-gray-500">Seat: </span>
@@ -143,7 +180,7 @@ const BookingPage = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Complete Your Booking</h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-4">Passenger Details</h2>
               <form onSubmit={handleBooking} className="space-y-4">
@@ -195,9 +232,37 @@ const BookingPage = () => {
                   </div>
                 )}
 
+                {/* Promo Code */}
+                <div className="border border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Tag className="w-4 h-4 text-blue-600" />
+                    <p className="text-sm font-medium text-gray-700">Promo Code</p>
+                  </div>
+                  {promo ? (
+                    <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                      <div>
+                        <p className="text-sm font-bold text-green-700">🎉 {promo.code} applied!</p>
+                        <p className="text-xs text-green-600">{promo.description} · You save {formatPrice(promo.discount)}</p>
+                      </div>
+                      <button type="button" onClick={() => { setPromo(null); setPromoCode(''); }}
+                        className="text-red-400 hover:text-red-600 text-xs font-medium ml-3">Remove</button>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyPromo())}
+                        placeholder="Enter promo code" className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white uppercase tracking-widest" />
+                      <button type="button" onClick={applyPromo} disabled={promoLoading || !promoCode.trim()}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-blue-700 transition-colors">
+                        {promoLoading ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <button type="submit" disabled={loading}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg disabled:opacity-50 text-base transition-colors">
-                  {loading ? 'Processing...' : `Pay ${formatPrice(selectedFlight.price.grandTotal)}`}
+                  {loading ? 'Processing...' : `Pay ${formatPrice(finalAmount)}`}
                 </button>
               </form>
             </div>
@@ -225,20 +290,7 @@ const BookingPage = () => {
                   {selectedSeat.extraLegroom && <span className="ml-2 text-green-600 text-xs">Extra Legroom</span>}
                 </div>
               )}
-              <div className="border-t pt-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Base fare</span>
-                  <span>{formatPrice(selectedFlight.price.base)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Taxes and fees</span>
-                  <span>{formatPrice(parseFloat(selectedFlight.price.grandTotal) - parseFloat(selectedFlight.price.base))}</span>
-                </div>
-                <div className="flex justify-between font-bold text-blue-600 pt-2 border-t">
-                  <span>Total</span>
-                  <span>{formatPrice(selectedFlight.price.grandTotal)}</span>
-                </div>
-              </div>
+              <PriceSummary />
             </div>
           </div>
         </div>

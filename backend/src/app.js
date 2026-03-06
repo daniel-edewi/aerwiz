@@ -34,6 +34,7 @@ app.use('/api/bookings', require('./modules/bookings/bookings.routes'));
 app.use('/api/payments', require('./modules/payments/payments.routes'));
 app.use('/api/alerts', require('./modules/alerts/alerts.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
+app.use('/api/promo', require('./modules/promo/promo.routes'));
 
 // Health check
 app.get('/', (req, res) => {
