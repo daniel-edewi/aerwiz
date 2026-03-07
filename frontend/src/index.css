@@ -14,23 +14,33 @@ body {
 }
 /* Fix iOS Safari input styling */
 input,
-select {
+select,
+textarea {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-color: white !important;
+  background-color: #ffffff !important;
+  color: #374151 !important;
+  font-size: 16px !important; /* Prevents iOS zoom on focus */
 }
 
 input[type="date"] {
-  background-color: white !important;
-  color: #374151;
+  -webkit-appearance: none;
+  background-color: #ffffff !important;
+  color: #374151 !important;
+  font-size: 16px !important;
+  min-height: 44px;
+  cursor: pointer;
 }
 
-select {
-  background-color: white !important;
-  color: #374151;
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
 }
 
 input::placeholder {
-  color: #9ca3af;
+  color: #9ca3af !important;
+}
+
+select {
+  background-image: none;
 }
