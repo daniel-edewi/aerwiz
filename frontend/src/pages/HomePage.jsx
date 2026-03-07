@@ -5,6 +5,7 @@ import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
 import { Plane, Search, Calendar, Users, Plus, Trash2 } from 'lucide-react';
+import AirportSearch from '../components/AirportSearch';
 
 const HomePage = () => {
   const { isAuthenticated } = useAuthStore();
@@ -16,17 +17,13 @@ const HomePage = () => {
     e.preventDefault();
     setLoading(true);
     setIsSearching(true);
-
     try {
       let results = [];
-
       if (searchParams.tripType === 'MULTI_CITY') {
         const legs = searchParams.multiCityLegs;
         if (legs.some(l => !l.origin || !l.destination || !l.departureDate)) {
           toast.error('Please fill in all flight legs');
-          setLoading(false);
-          setIsSearching(false);
-          return;
+          setLoading(false); setIsSearching(false); return;
         }
         const allResults = await Promise.all(
           legs.map(leg => flightsAPI.search({
@@ -41,9 +38,7 @@ const HomePage = () => {
       } else {
         if (!searchParams.origin || !searchParams.destination || !searchParams.departureDate) {
           toast.error('Please fill in all required fields');
-          setLoading(false);
-          setIsSearching(false);
-          return;
+          setLoading(false); setIsSearching(false); return;
         }
         const response = await flightsAPI.search({
           origin: searchParams.origin.toUpperCase(),
@@ -55,14 +50,12 @@ const HomePage = () => {
         });
         results = response.data.data;
       }
-
       setSearchResults(results);
       navigate('/flights');
     } catch (error) {
       toast.error('No flights found. Please try different dates or destinations.');
     } finally {
-      setLoading(false);
-      setIsSearching(false);
+      setLoading(false); setIsSearching(false);
     }
   };
 
@@ -108,7 +101,7 @@ const HomePage = () => {
             {searchParams.tripType === 'MULTI_CITY' ? (
               <div className="space-y-3 mb-4">
                 {searchParams.multiCityLegs.map((leg, index) => (
-                  <div key={index} className="border border-gray-200 rounded-xl p-4 bg-gray-50 relative">
+                  <div key={index} className="border border-gray-200 rounded-xl p-4 bg-gray-50">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-bold text-blue-600">Flight {index + 1}</span>
                       {index > 1 && (
@@ -117,25 +110,19 @@ const HomePage = () => {
                         </button>
                       )}
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
-                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                          <Plane className="w-4 h-4 text-gray-400 mr-2" />
-                          <input type="text" value={leg.origin}
-                            onChange={(e) => setMultiCityLeg(index, { origin: e.target.value.toUpperCase() })}
-                            className="w-full outline-none text-gray-700 uppercase text-sm" placeholder="LOS" maxLength={3} />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
-                        <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                          <Plane className="w-4 h-4 text-gray-400 mr-2" />
-                          <input type="text" value={leg.destination}
-                            onChange={(e) => setMultiCityLeg(index, { destination: e.target.value.toUpperCase() })}
-                            className="w-full outline-none text-gray-700 uppercase text-sm" placeholder="LHR" maxLength={3} />
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <AirportSearch
+                        label="From"
+                        value={leg.origin}
+                        onChange={(code) => setMultiCityLeg(index, { origin: code })}
+                        placeholder="City or airport"
+                      />
+                      <AirportSearch
+                        label="To"
+                        value={leg.destination}
+                        onChange={(code) => setMultiCityLeg(index, { destination: code })}
+                        placeholder="City or airport"
+                      />
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
                         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
@@ -183,24 +170,18 @@ const HomePage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
-                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                    <Plane className="w-4 h-4 text-gray-400 mr-2" />
-                    <input type="text" placeholder="e.g. LOS" value={searchParams.origin}
-                      onChange={(e) => setSearchParams({ origin: e.target.value })}
-                      className="w-full outline-none text-gray-700 uppercase" maxLength={3} />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
-                  <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                    <Plane className="w-4 h-4 text-gray-400 mr-2 rotate-90" />
-                    <input type="text" placeholder="e.g. LHR" value={searchParams.destination}
-                      onChange={(e) => setSearchParams({ destination: e.target.value })}
-                      className="w-full outline-none text-gray-700 uppercase" maxLength={3} />
-                  </div>
-                </div>
+                <AirportSearch
+                  label="From"
+                  value={searchParams.origin}
+                  onChange={(code) => setSearchParams({ origin: code })}
+                  placeholder="City or airport e.g. Lagos"
+                />
+                <AirportSearch
+                  label="To"
+                  value={searchParams.destination}
+                  onChange={(code) => setSearchParams({ destination: code })}
+                  placeholder="City or airport e.g. London"
+                />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
                   <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
