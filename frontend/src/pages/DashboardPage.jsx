@@ -67,7 +67,7 @@ const DashboardPage = () => {
   };
 
   const downloadBoardingPass = (booking) => {
-    fetch(`http://localhost:8000/api/bookings/${booking.id}/boarding-pass`, {
+   fetch(`${process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api'}/bookings/${booking.id}/boarding-pass`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.blob()).then(blob => {
       const url = URL.createObjectURL(blob);

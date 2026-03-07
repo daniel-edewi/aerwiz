@@ -49,10 +49,11 @@ const BookingPage = () => {
     if (!promoCode.trim()) return;
     setPromoLoading(true);
     try {
-      const res = await axios.post('http://localhost:8000/api/promo/validate',
-        { code: promoCode, amount: grandTotal },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.post(
+  `${process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api'}/promo/validate`,
+  { code: promoCode, amount: grandTotal },
+  { headers: { Authorization: `Bearer ${token}` } }
+);
       setPromo(res.data.data);
       toast.success(`🎉 Promo applied! You save ${formatPrice(res.data.data.discount)}`);
     } catch (e) {
