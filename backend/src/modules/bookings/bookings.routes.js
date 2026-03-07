@@ -19,4 +19,9 @@ router.patch('/:id/cancel', cancelBooking);
 router.patch('/:id/change-date', changeBookingDate);
 router.patch('/:id/change-route', changeBookingRoute);
 
+const { createBooking, getUserBookings, getBookingById, getBookingByReference, cancelBooking, changeBookingDate, changeBookingRoute } = require('./bookings.controller');
+
+router.patch('/:id/change-date', changeBookingDate);
+router.patch('/:id/change-route', changeBookingRoute);
+
 module.exports = router;
