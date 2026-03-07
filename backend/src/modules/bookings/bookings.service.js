@@ -105,12 +105,60 @@ const cancelBooking = async (bookingId, userId) => {
 
   if (!booking) throw new Error('Booking not found');
   if (booking.status === 'CANCELLED') throw new Error('Booking already cancelled');
-  if (booking.status === 'CONFIRMED') throw new Error('Confirmed bookings cannot be cancelled online. Please contact support');
+  if (booking.status === 'COMPLETED') throw new Error('Completed bookings cannot be cancelled');
+
+  const updated = await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: 'CANCELLED', updatedAt: new Date() },
+    include: { passengers: true }
+  });
+
+  // Send cancellation email
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const { sendBookingCancellationEmail } = require('../../utils/emailService');
+    await sendBookingCancellationEmail(user, updated);
+  } catch (e) { console.log('Email error:', e.message); }
+
+  return updated;
+};
+
+const changeBookingDate = async (bookingId, userId, newDepartureDate) => {
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, userId }
+  });
+
+  if (!booking) throw new Error('Booking not found');
+  if (booking.status === 'CANCELLED') throw new Error('Cancelled bookings cannot be modified');
+  if (booking.status === 'COMPLETED') throw new Error('Completed bookings cannot be modified');
 
   return await prisma.booking.update({
     where: { id: bookingId },
-    data: { status: 'CANCELLED' }
+    data: {
+      departureDate: new Date(newDepartureDate),
+      status: 'PENDING',
+      updatedAt: new Date()
+    },
+    include: { passengers: true }
   });
 };
 
-module.exports = { createBooking, getUserBookings, getBookingById, getBookingByReference, cancelBooking };
+const changeBookingRoute = async (bookingId, userId, { origin, destination }) => {
+  const booking = await prisma.booking.findFirst({
+    where: { id: bookingId, userId }
+  });
+
+  if (!booking) throw new Error('Booking not found');
+  if (booking.status === 'CANCELLED') throw new Error('Cancelled bookings cannot be modified');
+  if (booking.status === 'COMPLETED') throw new Error('Completed bookings cannot be modified');
+
+  return await prisma.booking.update({
+    where: { id: bookingId },
+    data: { origin, destination, status: 'PENDING', updatedAt: new Date() },
+    include: { passengers: true }
+  });
+};
+
+
+
+module.exports = { createBooking, getUserBookings, getBookingById, getBookingByReference, cancelBooking, changeBookingDate, changeBookingRoute };

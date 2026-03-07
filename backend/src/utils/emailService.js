@@ -227,4 +227,35 @@ const sendPriceAlertEmail = async (user, alert, currentPrice) => {
   });
 };
 
-module.exports = module.exports = { sendWelcomeEmail, sendBookingConfirmationEmail, sendPaymentConfirmationEmail, sendPriceAlertEmail };
+const sendBookingCancellationEmail = async (user, booking) => {
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from: `"Aerwiz ✈️" <${process.env.EMAIL_USER}>`,
+    to: user.email,
+    subject: `Booking Cancelled - ${booking.bookingReference}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #dc2626, #b91c1c); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">✈️ Aerwiz</h1>
+          <p style="color: #fca5a5; margin: 10px 0 0;">Booking Cancellation Confirmation</p>
+        </div>
+        <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px;">
+          <h2 style="color: #374151;">Hi ${user.firstName},</h2>
+          <p style="color: #6b7280;">Your booking has been successfully cancelled.</p>
+          <div style="background: white; border-radius: 8px; padding: 20px; margin: 20px 0; border: 1px solid #e5e7eb;">
+            <h3 style="color: #374151; margin-top: 0;">Cancelled Booking Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="padding: 8px 0; color: #6b7280;">Reference</td><td style="font-weight: bold; color: #374151;">${booking.bookingReference}</td></tr>
+              <tr><td style="padding: 8px 0; color: #6b7280;">Route</td><td style="font-weight: bold; color: #374151;">${booking.origin} → ${booking.destination}</td></tr>
+              <tr><td style="padding: 8px 0; color: #6b7280;">Status</td><td><span style="background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; font-weight: bold;">CANCELLED</span></td></tr>
+            </table>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">If you paid for this booking, refunds are processed within 5-10 business days depending on your payment method.</p>
+          <p style="color: #6b7280; font-size: 14px;">Need help? Contact our support team.</p>
+        </div>
+      </div>
+    `
+  });
+};
+
+module.exports = { sendWelcomeEmail, sendBookingConfirmationEmail, sendPaymentConfirmationEmail, sendPriceAlertEmail, sendBookingCancellationEmail };
