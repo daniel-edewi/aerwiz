@@ -4,8 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users, Plus, Trash2 } from 'lucide-react';
+import { Plane, Search, Calendar, Users, Plus, Trash2, ExternalLink } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
+
+const TRIP_COM_AFFILIATE_ID = 'S13579379';
+const TRIP_COM_ALLIANCE_ID = '7918030';
+const TRIP_COM_SID = '297501611';
 
 const HomePage = () => {
   const { isAuthenticated } = useAuthStore();
@@ -97,7 +101,6 @@ const HomePage = () => {
           </div>
 
           <form onSubmit={handleSearch}>
-            {/* Multi-City Legs */}
             {searchParams.tripType === 'MULTI_CITY' ? (
               <div className="space-y-3 mb-4">
                 {searchParams.multiCityLegs.map((leg, index) => (
@@ -111,18 +114,10 @@ const HomePage = () => {
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <AirportSearch
-                        label="From"
-                        value={leg.origin}
-                        onChange={(code) => setMultiCityLeg(index, { origin: code })}
-                        placeholder="City or airport"
-                      />
-                      <AirportSearch
-                        label="To"
-                        value={leg.destination}
-                        onChange={(code) => setMultiCityLeg(index, { destination: code })}
-                        placeholder="City or airport"
-                      />
+                      <AirportSearch label="From" value={leg.origin}
+                        onChange={(code) => setMultiCityLeg(index, { origin: code })} placeholder="City or airport" />
+                      <AirportSearch label="To" value={leg.destination}
+                        onChange={(code) => setMultiCityLeg(index, { destination: code })} placeholder="City or airport" />
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
                         <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white">
@@ -136,7 +131,6 @@ const HomePage = () => {
                     </div>
                   </div>
                 ))}
-
                 {searchParams.multiCityLegs.length < 5 && (
                   <button type="button" onClick={addMultiCityLeg}
                     className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 border border-dashed border-blue-300 rounded-lg w-full justify-center hover:bg-blue-50 transition-colors">
@@ -144,7 +138,6 @@ const HomePage = () => {
                     <span>Add Another Flight</span>
                   </button>
                 )}
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
@@ -170,18 +163,10 @@ const HomePage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <AirportSearch
-                  label="From"
-                  value={searchParams.origin}
-                  onChange={(code) => setSearchParams({ origin: code })}
-                  placeholder="City or airport e.g. Lagos"
-                />
-                <AirportSearch
-                  label="To"
-                  value={searchParams.destination}
-                  onChange={(code) => setSearchParams({ destination: code })}
-                  placeholder="City or airport e.g. London"
-                />
+                <AirportSearch label="From" value={searchParams.origin}
+                  onChange={(code) => setSearchParams({ origin: code })} placeholder="City or airport e.g. Lagos" />
+                <AirportSearch label="To" value={searchParams.destination}
+                  onChange={(code) => setSearchParams({ destination: code })} placeholder="City or airport e.g. London" />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date</label>
                   <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
@@ -237,7 +222,7 @@ const HomePage = () => {
       </div>
 
       {/* Features */}
-      <div className="max-w-4xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+      <div className="max-w-4xl mx-auto px-4 pb-8 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
         {[
           { title: 'Best Prices', desc: 'Compare hundreds of airlines to find the lowest fares', icon: '💰' },
           { title: 'Easy Booking', desc: 'Book your flight in minutes with our simple process', icon: '✈️' },
@@ -252,6 +237,61 @@ const HomePage = () => {
             <p className="text-blue-100 text-sm">{f.desc}</p>
           </div>
         ))}
+      </div>
+
+      {/* Trip.com Section */}
+      <div className="max-w-4xl mx-auto px-4 pb-16">
+        <div className="bg-white bg-opacity-10 rounded-2xl p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-white text-xl font-bold">Can't find your flight?</h2>
+              <p className="text-blue-100 text-sm mt-1">Search millions of flights worldwide on Trip.com</p>
+            </div>
+            <div className="bg-white rounded-xl px-3 py-1.5 flex-shrink-0">
+              <span className="text-blue-600 font-bold text-sm">Trip.com</span>
+            </div>
+          </div>
+
+          {/* Popular Routes */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[
+              { from: 'LOS', to: 'LHR', label: 'Lagos → London' },
+              { from: 'LOS', to: 'DXB', label: 'Lagos → Dubai' },
+              { from: 'LOS', to: 'JFK', label: 'Lagos → New York' },
+              { from: 'ABV', to: 'DOH', label: 'Abuja → Doha' },
+            ].map((route) => (
+              
+                key={route.label}
+                href={`https://www.trip.com/flights/showfareflight?dcity=${route.from}&acity=${route.to}&Allianceid=${TRIP_COM_ALLIANCE_ID}&SID=${TRIP_COM_SID}&trip_sub1=aerwiz`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white bg-opacity-15 hover:bg-opacity-25 transition-all rounded-xl p-3 text-center cursor-pointer group">
+                <p className="text-white text-xs font-medium truncate">{route.label}</p>
+                <p className="text-blue-200 text-xs mt-1 group-hover:text-white transition-colors">Search →</p>
+              </a>
+            ))}
+          </div>
+
+          {/* Trip.com Banner + CTA */}
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-1 w-full">
+              <iframe
+                src={`https://www.trip.com/partners/ad/${TRIP_COM_AFFILIATE_ID}?Allianceid=${TRIP_COM_ALLIANCE_ID}&SID=${TRIP_COM_SID}&trip_sub1=aerwiz`}
+                style={{ width: '100%', height: '120px', border: 'none', borderRadius: '12px' }}
+                scrolling="no"
+                title="Trip.com Flights"
+              />
+            </div>
+            
+              href={`https://www.trip.com/flights/?Allianceid=${TRIP_COM_ALLIANCE_ID}&SID=${TRIP_COM_SID}&trip_sub1=aerwiz`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 bg-white text-blue-700 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors whitespace-nowrap flex-shrink-0">
+              <span>Search on Trip.com</span>
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
