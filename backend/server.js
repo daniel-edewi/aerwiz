@@ -25,3 +25,4 @@ process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled rejection:', err);
   server.close(() => process.exit(1));
 });
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
