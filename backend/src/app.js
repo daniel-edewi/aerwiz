@@ -36,6 +36,11 @@ app.use('/api/alerts', require('./modules/alerts/alerts.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 app.use('/api/promo', require('./modules/promo/promo.routes'));
 
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Health check
 app.get('/', (req, res) => {
   res.json({
@@ -56,6 +61,8 @@ app.get('/test-email', async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 });
+
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
