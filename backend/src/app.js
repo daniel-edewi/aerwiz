@@ -6,6 +6,9 @@ require('dotenv').config();
 
 const app = express();
 
+const compression = require('compression');
+app.use(compression());
+
 // CORS
 app.use(cors({
   origin: ['https://aerwiz.vercel.app', 'http://localhost:3000'],
