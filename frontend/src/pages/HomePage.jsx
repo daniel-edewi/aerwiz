@@ -4,12 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { Plane, Search, Calendar, Users, Plus, Trash2 } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
-
-const TRIP_COM_AFFILIATE_ID = 'S13579379';
-const TRIP_COM_ALLIANCE_ID = '7918030';
-const TRIP_COM_SID = '297501611';
 
 const HomePage = () => {
   const { isAuthenticated } = useAuthStore();
@@ -65,6 +61,7 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500">
+      {/* Header */}
       <nav className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-2">
           <Plane className="text-white w-8 h-8" />
@@ -82,10 +79,12 @@ const HomePage = () => {
         </div>
       </nav>
 
+      {/* Hero */}
       <div className="text-center py-16 px-4">
         <h1 className="text-5xl font-bold text-white mb-4">Fly Anywhere, Anytime</h1>
         <p className="text-blue-100 text-xl mb-12">Search and book flights across the world at the best prices</p>
 
+        {/* Search Form */}
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-6">
           <div className="flex space-x-4 mb-6">
             {['ONE_WAY', 'ROUND_TRIP', 'MULTI_CITY'].map((type) => (
@@ -217,7 +216,8 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pb-8 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+      {/* Features */}
+      <div className="max-w-4xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
         {[
           { title: 'Best Prices', desc: 'Compare hundreds of airlines to find the lowest fares', icon: '💰' },
           { title: 'Easy Booking', desc: 'Book your flight in minutes with our simple process', icon: '✈️' },
@@ -234,53 +234,6 @@ const HomePage = () => {
         ))}
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pb-16">
-        <div className="bg-white bg-opacity-10 rounded-2xl p-6 sm:p-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-white text-xl font-bold">Can't find your flight?</h2>
-              <p className="text-blue-100 text-sm mt-1">Search millions of flights worldwide on Trip.com</p>
-            </div>
-            <div className="bg-white rounded-xl px-3 py-1.5 flex-shrink-0">
-              <span className="text-blue-600 font-bold text-sm">Trip.com</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            {[
-              { from: 'LOS', to: 'LHR', label: 'Lagos to London' },
-              { from: 'LOS', to: 'DXB', label: 'Lagos to Dubai' },
-              { from: 'LOS', to: 'JFK', label: 'Lagos to New York' },
-              { from: 'ABV', to: 'DOH', label: 'Abuja to Doha' },
-            ].map((route) => (
-              <a key={route.label}
-                href={'https://www.trip.com/flights/showfareflight?dcity=' + route.from + '&acity=' + route.to + '&Allianceid=' + TRIP_COM_ALLIANCE_ID + '&SID=' + TRIP_COM_SID + '&trip_sub1=aerwiz'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white bg-opacity-15 hover:bg-opacity-25 transition-all rounded-xl p-3 text-center group">
-                <p className="text-white text-xs font-medium truncate">{route.label}</p>
-                <p className="text-blue-200 text-xs mt-1 group-hover:text-white">Search</p>
-              </a>
-            ))}
-          </div>
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex-1 w-full">
-              <iframe
-                src={'https://www.trip.com/partners/ad/' + TRIP_COM_AFFILIATE_ID + '?Allianceid=' + TRIP_COM_ALLIANCE_ID + '&SID=' + TRIP_COM_SID + '&trip_sub1=aerwiz'}
-                style={{ width: '100%', height: '120px', border: 'none', borderRadius: '12px' }}
-                scrolling="no"
-                title="Trip.com Flights"
-              />
-            </div>
-            <a href={'https://www.trip.com/flights/?Allianceid=' + TRIP_COM_ALLIANCE_ID + '&SID=' + TRIP_COM_SID + '&trip_sub1=aerwiz'}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 bg-white text-blue-700 font-bold px-6 py-3 rounded-xl hover:bg-blue-50 transition-colors whitespace-nowrap flex-shrink-0">
-              <span>Search on Trip.com</span>
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
