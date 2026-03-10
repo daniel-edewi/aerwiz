@@ -10,6 +10,38 @@ import { Plane, ChevronDown, Tag } from 'lucide-react';
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm';
+
+const Field = ({ label, children }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    {children}
+  </div>
+);
+
+const PriceSummary = ({ selectedFlight, grandTotal, finalAmount, promo, mobile = false }) => (
+  <div className={`space-y-1 text-sm ${mobile ? 'border-t pt-3' : 'border-t pt-4 space-y-2'}`}>
+    <div className="flex justify-between">
+      <span className="text-gray-500">Base fare</span>
+      <span>{formatPrice(selectedFlight.price.base)}</span>
+    </div>
+    <div className="flex justify-between">
+      <span className="text-gray-500">Taxes and fees</span>
+      <span>{formatPrice(grandTotal - parseFloat(selectedFlight.price.base))}</span>
+    </div>
+    {promo && (
+      <div className="flex justify-between text-green-600 font-medium">
+        <span>🎟️ {promo.code}</span>
+        <span>-{formatPrice(promo.discount)}</span>
+      </div>
+    )}
+    <div className={`flex justify-between font-bold text-blue-600 pt-1 border-t ${mobile ? '' : 'pt-2'}`}>
+      <span>Total</span>
+      <span>{formatPrice(finalAmount)}</span>
+    </div>
+  </div>
+);
+
 const BookingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +60,8 @@ const BookingPage = () => {
     passportExpiry: '', email: '', phone: '',
     seatNumber: selectedSeat?.id || ''
   });
+
+  const updatePassenger = (field, value) => setPassenger(prev => ({ ...prev, [field]: value }));
 
   if (!selectedFlight) {
     return (
@@ -50,12 +84,12 @@ const BookingPage = () => {
     setPromoLoading(true);
     try {
       const res = await axios.post(
-  `${process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api'}/promo/validate`,
-  { code: promoCode, amount: grandTotal },
-  { headers: { Authorization: `Bearer ${token}` } }
-);
+        `${process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api'}/promo/validate`,
+        { code: promoCode, amount: grandTotal },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setPromo(res.data.data);
-      toast.success(`🎉 Promo applied! You save ${formatPrice(res.data.data.discount)}`);
+      toast.success(`Promo applied! You save ${formatPrice(res.data.data.discount)}`);
     } catch (e) {
       toast.error(e.response?.data?.message || 'Invalid promo code');
       setPromo(null);
@@ -92,41 +126,8 @@ const BookingPage = () => {
     }
   };
 
-  const Field = ({ label, children }) => (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {children}
-    </div>
-  );
-
-  const inputClass = "w-full border border-gray-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 text-sm";
-
-  const PriceSummary = ({ mobile = false }) => (
-    <div className={`space-y-1 text-sm ${mobile ? 'border-t pt-3' : 'border-t pt-4 space-y-2'}`}>
-      <div className="flex justify-between">
-        <span className="text-gray-500">Base fare</span>
-        <span>{formatPrice(selectedFlight.price.base)}</span>
-      </div>
-      <div className="flex justify-between">
-        <span className="text-gray-500">Taxes and fees</span>
-        <span>{formatPrice(grandTotal - parseFloat(selectedFlight.price.base))}</span>
-      </div>
-      {promo && (
-        <div className="flex justify-between text-green-600 font-medium">
-          <span>🎟️ {promo.code}</span>
-          <span>-{formatPrice(promo.discount)}</span>
-        </div>
-      )}
-      <div className={`flex justify-between font-bold text-blue-600 pt-1 border-t ${mobile ? '' : 'pt-2'}`}>
-        <span>Total</span>
-        <span>{formatPrice(finalAmount)}</span>
-      </div>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-blue-700 text-white py-3 px-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
@@ -141,7 +142,6 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* Mobile Flight Summary Toggle */}
       <div className="lg:hidden bg-white border-b border-gray-200">
         <button onClick={() => setShowSummary(!showSummary)}
           className="w-full flex items-center justify-between px-4 py-3">
@@ -165,7 +165,7 @@ const BookingPage = () => {
                 <p className="text-gray-500 text-xs">{lastSegment.arrival.iataCode}</p>
               </div>
             </div>
-            <PriceSummary mobile={true} />
+            <PriceSummary selectedFlight={selectedFlight} grandTotal={grandTotal} finalAmount={finalAmount} promo={promo} mobile={true} />
             {selectedSeat && (
               <div className="mt-2 bg-blue-50 rounded-lg px-3 py-2 text-sm">
                 <span className="text-gray-500">Seat: </span>
@@ -180,14 +180,13 @@ const BookingPage = () => {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Complete Your Booking</h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Form */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
               <h2 className="text-lg font-bold text-gray-800 mb-4">Passenger Details</h2>
               <form onSubmit={handleBooking} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Title">
-                    <select value={passenger.title} onChange={(e) => setPassenger({ ...passenger, title: e.target.value })} className={inputClass}>
+                    <select value={passenger.title} onChange={(e) => updatePassenger('title', e.target.value)} className={inputClass}>
                       <option value="MR">Mr</option>
                       <option value="MRS">Mrs</option>
                       <option value="MS">Ms</option>
@@ -195,35 +194,35 @@ const BookingPage = () => {
                     </select>
                   </Field>
                   <Field label="Nationality">
-                    <input type="text" value={passenger.nationality} onChange={(e) => setPassenger({ ...passenger, nationality: e.target.value })} className={inputClass} maxLength={2} />
+                    <input type="text" value={passenger.nationality} onChange={(e) => updatePassenger('nationality', e.target.value)} className={inputClass} maxLength={2} />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="First Name">
-                    <input type="text" value={passenger.firstName} onChange={(e) => setPassenger({ ...passenger, firstName: e.target.value })} className={inputClass} required />
+                    <input type="text" value={passenger.firstName} onChange={(e) => updatePassenger('firstName', e.target.value)} className={inputClass} required />
                   </Field>
                   <Field label="Last Name">
-                    <input type="text" value={passenger.lastName} onChange={(e) => setPassenger({ ...passenger, lastName: e.target.value })} className={inputClass} required />
+                    <input type="text" value={passenger.lastName} onChange={(e) => updatePassenger('lastName', e.target.value)} className={inputClass} required />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="Date of Birth">
-                    <input type="date" value={passenger.dateOfBirth} onChange={(e) => setPassenger({ ...passenger, dateOfBirth: e.target.value })} className={inputClass} required />
+                    <input type="date" value={passenger.dateOfBirth} onChange={(e) => updatePassenger('dateOfBirth', e.target.value)} className={inputClass} required />
                   </Field>
                   <Field label="Passport Number">
-                    <input type="text" value={passenger.passportNumber} onChange={(e) => setPassenger({ ...passenger, passportNumber: e.target.value })} className={inputClass} />
+                    <input type="text" value={passenger.passportNumber} onChange={(e) => updatePassenger('passportNumber', e.target.value)} className={inputClass} />
                   </Field>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="Email">
-                    <input type="email" value={passenger.email} onChange={(e) => setPassenger({ ...passenger, email: e.target.value })} className={inputClass} required />
+                    <input type="email" value={passenger.email} onChange={(e) => updatePassenger('email', e.target.value)} className={inputClass} required />
                   </Field>
                   <Field label="Phone">
-                    <input type="tel" value={passenger.phone} onChange={(e) => setPassenger({ ...passenger, phone: e.target.value })} className={inputClass} required />
+                    <input type="tel" value={passenger.phone} onChange={(e) => updatePassenger('phone', e.target.value)} className={inputClass} required />
                   </Field>
                 </div>
                 <Field label="Passport Expiry">
-                  <input type="date" value={passenger.passportExpiry} onChange={(e) => setPassenger({ ...passenger, passportExpiry: e.target.value })} className={`${inputClass} max-w-xs`} />
+                  <input type="date" value={passenger.passportExpiry} onChange={(e) => updatePassenger('passportExpiry', e.target.value)} className={`${inputClass} max-w-xs`} />
                 </Field>
 
                 {selectedSeat && (
@@ -233,7 +232,6 @@ const BookingPage = () => {
                   </div>
                 )}
 
-                {/* Promo Code */}
                 <div className="border border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
                   <div className="flex items-center space-x-2 mb-2">
                     <Tag className="w-4 h-4 text-blue-600" />
@@ -269,7 +267,6 @@ const BookingPage = () => {
             </div>
           </div>
 
-          {/* Desktop Flight Summary */}
           <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-xl shadow-sm p-6 sticky top-4">
               <h2 className="text-lg font-bold text-gray-800 mb-4">Flight Summary</h2>
@@ -291,7 +288,7 @@ const BookingPage = () => {
                   {selectedSeat.extraLegroom && <span className="ml-2 text-green-600 text-xs">Extra Legroom</span>}
                 </div>
               )}
-              <PriceSummary />
+              <PriceSummary selectedFlight={selectedFlight} grandTotal={grandTotal} finalAmount={finalAmount} promo={promo} />
             </div>
           </div>
         </div>
