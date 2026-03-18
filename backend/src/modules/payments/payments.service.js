@@ -36,9 +36,12 @@ const makePaystackRequest = (path, method, data) => {
 };
 
 const initializePayment = async (userId, bookingId) => {
+  // Find booking - for guests userId is null so search by id only
   const booking = await prisma.booking.findFirst({
-    where: { id: bookingId, userId },
-    include: { user: true }
+    where: userId
+      ? { id: bookingId, userId }
+      : { id: bookingId },
+    include: { passengers: true }
   });
 
   if (!booking) throw new Error('Booking not found');
@@ -52,17 +55,24 @@ const initializePayment = async (userId, bookingId) => {
     throw new Error('Booking already paid');
   }
 
+  // Get email - from user account or from passenger details
+  let email = booking.contactEmail;
+  if (!email && booking.passengers && booking.passengers.length > 0) {
+    email = booking.passengers[0].email;
+  }
+  if (!email) throw new Error('No email found for payment');
+
   const amountInKobo = Math.round(booking.totalAmount * 100);
 
   const paystackData = JSON.stringify({
-    email: booking.user.email,
+    email,
     amount: amountInKobo,
     currency: 'NGN',
     reference: `AWZ-${booking.bookingReference}-${Date.now()}`,
     metadata: {
       bookingId: booking.id,
       bookingReference: booking.bookingReference,
-      userId
+      userId: userId || 'guest'
     },
     callback_url: `${process.env.FRONTEND_URL}/payment/verify`
   });
@@ -78,7 +88,7 @@ const initializePayment = async (userId, bookingId) => {
     await prisma.payment.create({
       data: {
         bookingId,
-        userId,
+        ...(userId && { userId }),
         amount: booking.totalAmount,
         currency: 'NGN',
         provider: 'PAYSTACK',
@@ -102,7 +112,7 @@ const verifyPayment = async (reference) => {
 
   const payment = await prisma.payment.findFirst({
     where: { providerReference: reference },
-    include: { booking: true }
+    include: { booking: { include: { passengers: true } } }
   });
 
   if (!payment) throw new Error('Payment record not found');
@@ -118,9 +128,22 @@ const verifyPayment = async (reference) => {
     });
 
     try {
-  const user = await prisma.user.findUnique({ where: { id: payment.userId } });
-  await sendPaymentConfirmationEmail(user, payment.booking, payment);
-} catch (e) { console.log('Email error:', e.message); }
+      if (payment.userId) {
+        const user = await prisma.user.findUnique({ where: { id: payment.userId } });
+        await sendPaymentConfirmationEmail(user, payment.booking, payment);
+      } else {
+        // Guest - use passenger email
+        const guestEmail = payment.booking.passengers?.[0]?.email;
+        const guestName = payment.booking.passengers?.[0]?.firstName || 'Guest';
+        if (guestEmail) {
+          await sendPaymentConfirmationEmail(
+            { email: guestEmail, firstName: guestName },
+            payment.booking,
+            payment
+          );
+        }
+      }
+    } catch (e) { console.log('Email error:', e.message); }
 
     return {
       success: true,

@@ -6,8 +6,8 @@ const initializePayment = async (req, res) => {
     if (!bookingId) {
       return res.status(400).json({ success: false, message: 'bookingId is required' });
     }
-
-    const result = await paymentsService.initializePayment(req.user.id, bookingId);
+    const userId = req.user?.id || null;
+    const result = await paymentsService.initializePayment(userId, bookingId);
     res.json({
       success: true,
       message: 'Payment initialized',

@@ -8,24 +8,25 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(uuid())
-  email          String    @unique
+  id             String       @id @default(uuid())
+  email          String       @unique
   password       String
   firstName      String
   lastName       String
   phone          String?
-  nationality    String    @default("NG")
+  nationality    String       @default("NG")
   dateOfBirth    DateTime?
   passportNumber String?
   passportExpiry DateTime?
-  isVerified     Boolean   @default(false)
-  isActive       Boolean   @default(true)
-  role           Role      @default(USER)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  isVerified     Boolean      @default(false)
+  isActive       Boolean      @default(true)
+  role           Role         @default(USER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   bookings       Booking[]
-  priceAlerts     PriceAlert[]
+  priceAlerts    PriceAlert[]
   payments       Payment[]
+
   @@map("users")
 }
 
@@ -33,7 +34,7 @@ model Booking {
   id               String        @id @default(uuid())
   bookingReference String        @unique
   userId           String?
-  user             User?          @relation(fields: [userId], references: [id])
+  user             User?         @relation(fields: [userId], references: [id])
   flightData       Json
   origin           String
   destination      String
@@ -56,6 +57,7 @@ model Booking {
   updatedAt        DateTime      @updatedAt
   passengers       Passenger[]
   payment          Payment?
+
   @@map("bookings")
 }
 
@@ -74,6 +76,7 @@ model Passenger {
   email          String?
   phone          String?
   createdAt      DateTime      @default(now())
+
   @@map("passengers")
 }
 
@@ -81,8 +84,8 @@ model Payment {
   id                String          @id @default(uuid())
   bookingId         String          @unique
   booking           Booking         @relation(fields: [bookingId], references: [id])
-  userId            String
-  user              User            @relation(fields: [userId], references: [id])
+  userId            String?
+  user              User?           @relation(fields: [userId], references: [id])
   amount            Float
   currency          String          @default("NGN")
   provider          PaymentProvider
@@ -92,6 +95,7 @@ model Payment {
   paidAt            DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+
   @@map("payments")
 }
 
@@ -104,7 +108,41 @@ model Airport {
   countryCode String
   timezone    String
   isActive    Boolean @default(true)
+
   @@map("airports")
+}
+
+model PriceAlert {
+  id            String    @id @default(uuid())
+  userId        String
+  origin        String
+  destination   String
+  targetPrice   Float
+  cabinClass    String    @default("ECONOMY")
+  departureDate String?
+  isActive      Boolean   @default(true)
+  lastChecked   DateTime?
+  lastPrice     Float?
+  triggeredAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PromoCode {
+  id            String    @id @default(uuid())
+  code          String    @unique
+  description   String?
+  discountType  String    @default("PERCENTAGE")
+  discountValue Float
+  minAmount     Float?
+  maxDiscount   Float?
+  usageLimit    Int?
+  usageCount    Int       @default(0)
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 enum Role {
@@ -150,37 +188,4 @@ enum CabinClass {
 enum TripType {
   ONE_WAY
   ROUND_TRIP
-}
-model PriceAlert {
-  id              String   @id @default(uuid())
-  userId          String
-  origin          String
-  destination     String
-  targetPrice     Float
-  cabinClass      String   @default("ECONOMY")
-  departureDate   String?
-  isActive        Boolean  @default(true)
-  lastChecked     DateTime?
-  lastPrice       Float?
-  triggeredAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model PromoCode {
-  id            String   @id @default(uuid())
-  code          String   @unique
-  description   String?
-  discountType  String   @default("PERCENTAGE")
-  discountValue Float
-  minAmount     Float?
-  maxDiscount   Float?
-  usageLimit    Int?
-  usageCount    Int      @default(0)
-  isActive      Boolean  @default(true)
-  expiresAt     DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 }
