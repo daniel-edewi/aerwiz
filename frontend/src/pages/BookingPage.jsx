@@ -225,12 +225,26 @@ const BookingPage = () => {
                   <input type="date" value={passenger.passportExpiry} onChange={(e) => updatePassenger('passportExpiry', e.target.value)} className={`${inputClass} max-w-xs`} />
                 </Field>
 
-                {selectedSeat && (
-                  <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Selected Seat</span>
-                    <span className="font-bold text-blue-600">{selectedSeat.id} {selectedSeat.extraLegroom ? '🟢' : ''}</span>
-                  </div>
-                )}
+                <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-center justify-between">
+  <div>
+    <span className="text-sm text-gray-600">Seat Selection</span>
+    {selectedSeat && (
+      <p className="text-xs text-gray-400 mt-0.5">Seat {selectedSeat.id} {selectedSeat.extraLegroom ? '· Extra Legroom 🟢' : ''}</p>
+    )}
+  </div>
+  {selectedSeat ? (
+    <div className="flex items-center space-x-3">
+      <span className="font-bold text-blue-600">{selectedSeat.id}</span>
+      <button type="button" onClick={() => navigate('/seats')}
+        className="text-xs text-blue-600 underline hover:text-blue-800">Change</button>
+    </div>
+  ) : (
+    <button type="button" onClick={() => navigate('/seats')}
+      className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">
+      Select Seat
+    </button>
+  )}
+</div>
 
                 <div className="border border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
                   <div className="flex items-center space-x-2 mb-2">

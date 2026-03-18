@@ -236,7 +236,7 @@ const FlightsPage = () => {
                       <p className="text-xl sm:text-2xl font-bold text-blue-600">{formatPrice(flight.price.grandTotal)}</p>
                       <p className="text-xs text-gray-400">{isRoundTrip ? 'per person · round trip' : 'per person'}</p>
                     </div>
-                    <button onClick={() => { setSelectedFlight(flight); navigate('/seats'); }}
+                    <button onClick={() => { setSelectedFlight(flight); navigate('/book'); }}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-5 py-2 rounded-lg font-medium text-sm transition-colors">
                       Select
                     </button>
