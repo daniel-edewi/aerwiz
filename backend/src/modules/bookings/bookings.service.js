@@ -27,7 +27,7 @@ const createBooking = async (userId, bookingData) => {
   const booking = await prisma.booking.create({
     data: {
       bookingReference,
-      userId,
+      ...(userId && { userId }),
       flightData: flightOffer,
       origin: segment.departure.iataCode,
       destination: lastSegment.arrival.iataCode,
@@ -62,10 +62,16 @@ const createBooking = async (userId, bookingData) => {
       passengers: true
     }
   });
+
   try {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  await sendBookingConfirmationEmail(user, booking);
-} catch (e) { console.log('Email error:', e.message); }
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      await sendBookingConfirmationEmail(user, booking);
+    } else {
+      const guestUser = { email: contactEmail, firstName: passengers[0]?.firstName || 'Guest' };
+      await sendBookingConfirmationEmail(guestUser, booking);
+    }
+  } catch (e) { console.log('Email error:', e.message); }
 
   return booking;
 };

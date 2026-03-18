@@ -2,7 +2,8 @@ const bookingsService = require('./bookings.service');
 
 const createBooking = async (req, res) => {
   try {
-    const booking = await bookingsService.createBooking(req.user.id, req.body);
+    const userId = req.user?.id || null;
+    const booking = await bookingsService.createBooking(userId, req.body);
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
@@ -28,7 +29,8 @@ const getUserBookings = async (req, res) => {
 
 const getBookingById = async (req, res) => {
   try {
-    const booking = await bookingsService.getBookingById(req.params.id, req.user.id);
+    const userId = req.user?.id || null;
+    const booking = await bookingsService.getBookingById(req.params.id, userId);
     res.json({ success: true, data: booking });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -37,7 +39,8 @@ const getBookingById = async (req, res) => {
 
 const getBookingByReference = async (req, res) => {
   try {
-    const booking = await bookingsService.getBookingByReference(req.params.reference, req.user.id);
+    const userId = req.user?.id || null;
+    const booking = await bookingsService.getBookingByReference(req.params.reference, userId);
     res.json({ success: true, data: booking });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
