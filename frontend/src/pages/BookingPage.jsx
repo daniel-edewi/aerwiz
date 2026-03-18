@@ -86,7 +86,7 @@ const BookingPage = () => {
       const res = await axios.post(
         `${process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api'}/promo/validate`,
         { code: promoCode, amount: grandTotal },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
       setPromo(res.data.data);
       toast.success(`Promo applied! You save ${formatPrice(res.data.data.discount)}`);
@@ -100,11 +100,6 @@ const BookingPage = () => {
 
   const handleBooking = async (e) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-      toast.error('Please login to book a flight');
-      navigate('/login');
-      return;
-    }
     setLoading(true);
     try {
       const bookingResponse = await bookingsAPI.create({
@@ -182,7 +177,16 @@ const BookingPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">Passenger Details</h2>
+              <h2 className="text-lg font-bold text-gray-800 mb-2">Passenger Details</h2>
+              {!isAuthenticated && (
+                <p className="text-sm text-gray-500 mb-4">
+                  Already have an account?{' '}
+                  <span onClick={() => navigate('/login')} className="text-blue-600 underline cursor-pointer font-medium">
+                    Sign in for faster checkout
+                  </span>
+                  {' '}or continue as guest below.
+                </p>
+              )}
               <form onSubmit={handleBooking} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Title">
@@ -226,25 +230,25 @@ const BookingPage = () => {
                 </Field>
 
                 <div className="bg-blue-50 rounded-lg px-4 py-3 flex items-center justify-between">
-  <div>
-    <span className="text-sm text-gray-600">Seat Selection</span>
-    {selectedSeat && (
-      <p className="text-xs text-gray-400 mt-0.5">Seat {selectedSeat.id} {selectedSeat.extraLegroom ? '· Extra Legroom 🟢' : ''}</p>
-    )}
-  </div>
-  {selectedSeat ? (
-    <div className="flex items-center space-x-3">
-      <span className="font-bold text-blue-600">{selectedSeat.id}</span>
-      <button type="button" onClick={() => navigate('/seats')}
-        className="text-xs text-blue-600 underline hover:text-blue-800">Change</button>
-    </div>
-  ) : (
-    <button type="button" onClick={() => navigate('/seats')}
-      className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">
-      Select Seat
-    </button>
-  )}
-</div>
+                  <div>
+                    <span className="text-sm text-gray-600">Seat Selection</span>
+                    {selectedSeat && (
+                      <p className="text-xs text-gray-400 mt-0.5">Seat {selectedSeat.id} {selectedSeat.extraLegroom ? '· Extra Legroom 🟢' : ''}</p>
+                    )}
+                  </div>
+                  {selectedSeat ? (
+                    <div className="flex items-center space-x-3">
+                      <span className="font-bold text-blue-600">{selectedSeat.id}</span>
+                      <button type="button" onClick={() => navigate('/seats')}
+                        className="text-xs text-blue-600 underline hover:text-blue-800">Change</button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => navigate('/seats')}
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors">
+                      Select Seat
+                    </button>
+                  )}
+                </div>
 
                 <div className="border border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
                   <div className="flex items-center space-x-2 mb-2">
