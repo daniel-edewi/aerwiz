@@ -12,7 +12,10 @@ const getStats = async (req, res) => {
       prisma.booking.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { firstName: true, lastName: true, email: true } }, passengers: true }
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true } },
+          passengers: true
+        }
       })
     ]);
 
@@ -29,13 +32,23 @@ const getStats = async (req, res) => {
       take: 5
     });
 
+    // Normalize recentBookings so guest bookings show passenger name
+    const normalizedBookings = recentBookings.map(b => ({
+      ...b,
+      user: b.user || {
+        firstName: b.passengers?.[0]?.firstName || 'Guest',
+        lastName: b.passengers?.[0]?.lastName || '',
+        email: b.passengers?.[0]?.email || 'N/A'
+      }
+    }));
+
     res.json({
       success: true,
       data: {
         totalUsers,
         totalBookings,
         totalRevenue: totalRevenue._sum.totalAmount || 0,
-        recentBookings,
+        recentBookings: normalizedBookings,
         bookingsByStatus,
         bookingsByAirline
       }
@@ -65,7 +78,23 @@ const getAllBookings = async (req, res) => {
       prisma.booking.count({ where })
     ]);
 
-    res.json({ success: true, data: bookings, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+    // Normalize guest bookings
+    const normalizedBookings = bookings.map(b => ({
+      ...b,
+      user: b.user || {
+        firstName: b.passengers?.[0]?.firstName || 'Guest',
+        lastName: b.passengers?.[0]?.lastName || '',
+        email: b.passengers?.[0]?.email || 'N/A'
+      }
+    }));
+
+    res.json({
+      success: true,
+      data: normalizedBookings,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit)
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -81,7 +110,6 @@ const getAllUsers = async (req, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
-
     res.json({ success: true, data: users });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -92,12 +120,10 @@ const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
     const booking = await prisma.booking.update({
       where: { id },
       data: { status }
     });
-
     res.json({ success: true, data: booking });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
