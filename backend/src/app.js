@@ -2,11 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 require('dotenv').config();
 
 const app = express();
 
-const compression = require('compression');
+// Trust Railway's proxy
+app.set('trust proxy', 1);
+
 app.use(compression());
 
 // CORS
@@ -39,12 +42,10 @@ app.use('/api/alerts', require('./modules/alerts/alerts.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 app.use('/api/promo', require('./modules/promo/promo.routes'));
 
-
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
-
 // Health check
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
+// Root
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -65,7 +66,6 @@ app.get('/test-email', async (req, res) => {
   }
 });
 
-app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
