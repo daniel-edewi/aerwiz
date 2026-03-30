@@ -4,14 +4,21 @@ import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users, Plus, Trash2 } from 'lucide-react';
+import { Plane, Search, Calendar, Users, Plus, Trash2, FileSearch } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api';
 
 const HomePage = () => {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const { searchParams, setSearchParams, setSearchResults, setIsSearching, setMultiCityLeg, addMultiCityLeg, removeMultiCityLeg } = useFlightStore();
   const [loading, setLoading] = useState(false);
+  const [bookingRef, setBookingRef] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [manageLoading, setManageLoading] = useState(false);
+  const [foundBooking, setFoundBooking] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -57,6 +64,47 @@ const HomePage = () => {
     } finally {
       setLoading(false); setIsSearching(false);
     }
+  };
+
+  const handleManageBooking = async (e) => {
+    e.preventDefault();
+    if (!bookingRef.trim() || !lastName.trim()) {
+      return toast.error('Please enter your booking reference and last name');
+    }
+    setManageLoading(true);
+    setFoundBooking(null);
+    try {
+      const res = await axios.get(`${API_URL}/bookings/reference/${bookingRef.trim().toUpperCase()}`);
+      const booking = res.data.data;
+      const passengerLastName = booking.passengers?.[0]?.lastName?.toLowerCase();
+      if (passengerLastName !== lastName.trim().toLowerCase()) {
+        toast.error('Last name does not match our records');
+        setManageLoading(false);
+        return;
+      }
+      setFoundBooking(booking);
+    } catch (e) {
+      toast.error('Booking not found. Please check your reference number.');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+  });
+
+  const formatPrice = (amount) => new Intl.NumberFormat('en-NG', {
+    style: 'currency', currency: 'NGN', maximumFractionDigits: 0
+  }).format(amount);
+
+  const STATUS_COLORS = {
+    PENDING: 'bg-yellow-100 text-yellow-700',
+    PAYMENT_PENDING: 'bg-orange-100 text-orange-700',
+    CONFIRMED: 'bg-green-100 text-green-700',
+    CANCELLED: 'bg-red-100 text-red-700',
+    COMPLETED: 'bg-blue-100 text-blue-700',
+    FAILED: 'bg-red-100 text-red-700'
   };
 
   return (
@@ -217,7 +265,7 @@ const HomePage = () => {
       </div>
 
       {/* Features */}
-      <div className="max-w-4xl mx-auto px-4 pb-16 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+      <div className="max-w-4xl mx-auto px-4 pb-8 grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
         {[
           { title: 'Best Prices', desc: 'Compare hundreds of airlines to find the lowest fares', icon: '💰' },
           { title: 'Easy Booking', desc: 'Book your flight in minutes with our simple process', icon: '✈️' },
@@ -232,6 +280,123 @@ const HomePage = () => {
             <p className="text-blue-100 text-sm">{f.desc}</p>
           </div>
         ))}
+      </div>
+
+      {/* Manage My Booking */}
+      <div className="max-w-4xl mx-auto px-4 pb-16">
+        <div className="bg-white bg-opacity-10 rounded-2xl p-6 sm:p-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <FileSearch className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-white text-xl font-bold">Manage My Booking</h2>
+              <p className="text-blue-200 text-sm">Retrieve your booking using your reference number</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleManageBooking} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-blue-200 text-xs font-medium mb-1">Booking Reference</label>
+              <input
+                type="text"
+                value={bookingRef}
+                onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
+                placeholder="e.g. AWZ1A2B3C"
+                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-blue-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-sm uppercase tracking-widest"
+              />
+            </div>
+            <div>
+              <label className="block text-blue-200 text-xs font-medium mb-1">Passenger Last Name</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="e.g. Edewi"
+                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-blue-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 text-sm"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="submit"
+                disabled={manageLoading}
+                className="w-full bg-white text-blue-700 font-bold py-2.5 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2">
+                <Search className="w-4 h-4" />
+                <span>{manageLoading ? 'Searching...' : 'Find Booking'}</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Found Booking Result */}
+          {foundBooking && (
+            <div className="mt-6 bg-white rounded-xl p-5 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs text-gray-400">Booking Reference</p>
+                  <p className="text-xl font-bold text-blue-600 font-mono tracking-widest">{foundBooking.bookingReference}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${STATUS_COLORS[foundBooking.status] || 'bg-gray-100 text-gray-600'}`}>
+                  {foundBooking.status.replace('_', ' ')}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-gray-400">Route</p>
+                  <p className="font-bold text-gray-800">{foundBooking.origin} → {foundBooking.destination}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Departure</p>
+                  <p className="font-medium text-gray-700 text-sm">{formatDate(foundBooking.departureDate)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Flight</p>
+                  <p className="font-medium text-gray-700 text-sm">{foundBooking.flightNumber}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Total Paid</p>
+                  <p className="font-bold text-blue-600">{formatPrice(foundBooking.totalAmount)}</p>
+                </div>
+              </div>
+
+              {foundBooking.passengers && foundBooking.passengers.length > 0 && (
+                <div className="border-t pt-3 mb-4">
+                  <p className="text-xs text-gray-400 mb-2">Passengers</p>
+                  <div className="space-y-1">
+                    {foundBooking.passengers.map((p, i) => (
+                      <p key={i} className="text-sm text-gray-700 font-medium">
+                        {p.title} {p.firstName} {p.lastName}
+                        <span className="text-xs text-gray-400 ml-2">{p.type}</span>
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {foundBooking.status === 'PENDING' && (
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Complete Payment
+                  </button>
+                )}
+                {['CONFIRMED', 'PAYMENT_PENDING'].includes(foundBooking.status) && (
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+                    View Full Booking
+                  </button>
+                )}
+                <button
+                  onClick={() => { setFoundBooking(null); setBookingRef(''); setLastName(''); }}
+                  className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
     </div>
