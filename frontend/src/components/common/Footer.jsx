@@ -9,9 +9,13 @@ const Footer = () => {
     <footer className="bg-blue-900 text-white pt-12 pb-6 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+
           {/* Brand */}
           <div>
-            <div className="flex items-center space-x-2 mb-4 cursor-pointer" onClick={() => navigate('/')}>
+            <div
+              className="flex items-center space-x-2 mb-4 cursor-pointer"
+              onClick={() => navigate('/')}
+            >
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                 <Plane className="text-blue-700 w-5 h-5" />
               </div>
@@ -21,13 +25,11 @@ const Footer = () => {
               Your trusted platform for booking flights across Africa and the world at the best prices.
             </p>
             <div className="flex space-x-3">
-              {[
-                { icon: Facebook, label: 'Facebook' },
-                { icon: Twitter, label: 'Twitter' },
-                { icon: Instagram, label: 'Instagram' },
-                { icon: Linkedin, label: 'LinkedIn' },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors">
+              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors"
+                >
                   <Icon className="w-4 h-4 text-blue-300" />
                 </div>
               ))}
@@ -40,14 +42,18 @@ const Footer = () => {
             <ul className="space-y-2 text-blue-300 text-sm">
               {[
                 { label: 'Search Flights', action: () => navigate('/') },
-                { label: 'Manage Booking', action: () => navigate('/') },
+                { label: 'Manage Booking', action: () => { navigate('/'); setTimeout(() => { const el = document.getElementById('manage-booking-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 300); }},
                 { label: 'Price Alerts', action: () => navigate('/alerts') },
                 { label: 'Baggage Calculator', action: () => navigate('/baggage') },
                 { label: 'Seat Selection', action: () => navigate('/') },
               ].map(item => (
-                <li key={item.label}
+                <li
+                  key={item.label}
                   onClick={item.action}
-                  className="hover:text-white cursor-pointer transition-colors">{item.label}</li>
+                  className="hover:text-white cursor-pointer transition-colors"
+                >
+                  {item.label}
+                </li>
               ))}
             </ul>
           </div>
