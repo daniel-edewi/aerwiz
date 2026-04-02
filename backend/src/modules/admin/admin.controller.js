@@ -1,5 +1,15 @@
 const prisma = require('../../config/prisma');
 
+// SSE clients store
+const adminClients = new Set();
+
+const broadcastToAdmins = (event) => {
+  const data = `data: ${JSON.stringify(event)}\n\n`;
+  adminClients.forEach(client => {
+    try { client.write(data); } catch (e) { adminClients.delete(client); }
+  });
+};
+
 const getStats = async (req, res) => {
   try {
     const [totalUsers, totalBookings, totalRevenue, recentBookings] = await Promise.all([
@@ -18,10 +28,12 @@ const getStats = async (req, res) => {
         }
       })
     ]);
+
     const bookingsByStatus = await prisma.booking.groupBy({
       by: ['status'],
       _count: { status: true }
     });
+
     const bookingsByAirline = await prisma.booking.groupBy({
       by: ['airline'],
       _count: { airline: true },
@@ -29,6 +41,7 @@ const getStats = async (req, res) => {
       orderBy: { _count: { airline: 'desc' } },
       take: 5
     });
+
     const normalizedBookings = recentBookings.map(b => ({
       ...b,
       user: b.user || {
@@ -37,13 +50,16 @@ const getStats = async (req, res) => {
         email: b.passengers?.[0]?.email || 'N/A'
       }
     }));
+
     res.json({
       success: true,
       data: {
-        totalUsers, totalBookings,
+        totalUsers,
+        totalBookings,
         totalRevenue: totalRevenue._sum.totalAmount || 0,
         recentBookings: normalizedBookings,
-        bookingsByStatus, bookingsByAirline
+        bookingsByStatus,
+        bookingsByAirline
       }
     });
   } catch (error) {
@@ -55,6 +71,7 @@ const getAllBookings = async (req, res) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
     const where = status ? { status } : {};
+
     const [bookings, total] = await Promise.all([
       prisma.booking.findMany({
         where,
@@ -69,6 +86,7 @@ const getAllBookings = async (req, res) => {
       }),
       prisma.booking.count({ where })
     ]);
+
     const normalizedBookings = bookings.map(b => ({
       ...b,
       user: b.user || {
@@ -77,7 +95,14 @@ const getAllBookings = async (req, res) => {
         email: b.passengers?.[0]?.email || 'N/A'
       }
     }));
-    res.json({ success: true, data: normalizedBookings, total, page: parseInt(page), pages: Math.ceil(total / limit) });
+
+    res.json({
+      success: true,
+      data: normalizedBookings,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / limit)
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -103,9 +128,10 @@ const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const booking = await prisma.booking.update({ where: { id }, data: { status } });
-    // Notify admin SSE clients
-    notifyAdmins({ type: 'BOOKING_STATUS_UPDATED', booking });
+    const booking = await prisma.booking.update({
+      where: { id },
+      data: { status }
+    });
     res.json({ success: true, data: booking });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -116,36 +142,37 @@ const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
+
     if (!['USER', 'ADMIN'].includes(role)) {
       return res.status(400).json({ success: false, message: 'Invalid role. Must be USER or ADMIN' });
     }
-    const updated = await prisma.user.update({
+    if (id === req.user.id) {
+      return res.status(400).json({ success: false, message: 'You cannot change your own role' });
+    }
+
+    const user = await prisma.user.update({
       where: { id },
       data: { role },
       select: { id: true, firstName: true, lastName: true, email: true, role: true }
     });
-    res.json({ success: true, data: updated, message: `${updated.firstName} is now ${role}` });
+
+    res.json({ success: true, data: user, message: `User role updated to ${role}` });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// SSE: Store connected admin clients
-const adminClients = new Set();
-
-const sseConnect = (req, res) => {
+const streamNotifications = (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.flushHeaders();
 
-  // Send initial ping
-  res.write(`data: ${JSON.stringify({ type: 'CONNECTED', message: 'Admin notifications active' })}\n\n`);
+  res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Admin notifications connected' })}\n\n`);
 
-  // Keep alive every 30s
   const keepAlive = setInterval(() => {
-    res.write(`data: ${JSON.stringify({ type: 'PING' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'ping' })}\n\n`);
   }, 30000);
 
   adminClients.add(res);
@@ -156,11 +183,12 @@ const sseConnect = (req, res) => {
   });
 };
 
-const notifyAdmins = (data) => {
-  const message = `data: ${JSON.stringify(data)}\n\n`;
-  adminClients.forEach(client => {
-    try { client.write(message); } catch (e) { adminClients.delete(client); }
-  });
+module.exports = {
+  getStats,
+  getAllBookings,
+  getAllUsers,
+  updateBookingStatus,
+  updateUserRole,
+  streamNotifications,
+  broadcastToAdmins
 };
-
-module.exports = { getStats, getAllBookings, getAllUsers, updateBookingStatus, updateUserRole, sseConnect, notifyAdmins };
