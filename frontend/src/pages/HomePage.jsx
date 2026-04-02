@@ -139,7 +139,12 @@ const HomePage = () => {
             </div>
             <span className="text-blue-700 text-2xl font-bold">Aerwiz</span>
           </div>
-          
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
+            <span onClick={() => navigate('/')} className="hover:text-blue-600 cursor-pointer">Flights</span>
+            <span onClick={() => navigate('/baggage')} className="hover:text-blue-600 cursor-pointer">Baggage</span>
+            <span onClick={() => navigate('/alerts')} className="hover:text-blue-600 cursor-pointer">Price Alerts</span>
+            <span className="hover:text-blue-600 cursor-pointer">Deals</span>
+          </nav>
           <div className="flex items-center space-x-3">
             {isAuthenticated ? (
               <button onClick={() => navigate('/dashboard')} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 text-sm transition-colors">My Account</button>
