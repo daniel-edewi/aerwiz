@@ -161,4 +161,21 @@ const verifyPayment = async (reference) => {
   }
 };
 
+// Broadcast payment to admin
+    try {
+      const { broadcastToAdmins } = require('../admin/admin.controller');
+      broadcastToAdmins({
+        type: 'payment_received',
+        message: `Payment confirmed for booking ${booking.bookingReference}`,
+        booking: {
+          id: booking.id,
+          reference: booking.bookingReference,
+          route: `${booking.origin} → ${booking.destination}`,
+          amount: booking.totalAmount,
+          status: 'CONFIRMED',
+          createdAt: new Date()
+        }
+      });
+    } catch (e) {}
+
 module.exports = { initializePayment, verifyPayment };

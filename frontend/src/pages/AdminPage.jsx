@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
-import { Plane, Users, CreditCard, TrendingUp, LogOut } from 'lucide-react';
+import {
+  Plane, Users, CreditCard, TrendingUp, Bell, BellRing,
+  Shield, ShieldCheck, ChevronDown, Search, RefreshCw,
+  CheckCircle, Clock, XCircle, AlertCircle, X
+} from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api';
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' });
 
 const STATUS_COLORS = {
   PENDING: 'bg-yellow-100 text-yellow-700',
@@ -25,19 +30,112 @@ const AdminPage = () => {
   const [bookings, setBookings] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userSearch, setUserSearch] = useState('');
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [updatingRole, setUpdatingRole] = useState(null);
+  const sseRef = useRef(null);
+  const notifRef = useRef(null);
 
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') {
       toast.error('Admin access required');
-      navigate('/');
+      navigate('/login');
       return;
     }
+    fetchAll();
+    connectSSE();
+    return () => { if (sseRef.current) sseRef.current.close(); };
+  }, []);
+
+  // Close notifications dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const connectSSE = () => {
+    if (!token) return;
+    try {
+      const url = `${API_URL}/admin/notifications/stream`;
+      const es = new EventSource(`${url}?token=${token}`);
+      sseRef.current = es;
+
+      es.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === 'ping' || data.type === 'connected') return;
+
+        const notif = {
+          id: Date.now(),
+          ...data,
+          time: new Date(),
+          read: false
+        };
+        setNotifications(prev => [notif, ...prev].slice(0, 50));
+        setUnreadCount(prev => prev + 1);
+
+        // Show toast
+        if (data.type === 'new_booking') {
+          toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border border-blue-200 shadow-lg rounded-xl p-4 flex items-start space-x-3 max-w-sm`}>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Plane className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-800 text-sm">✈️ New Booking!</p>
+                <p className="text-gray-600 text-xs mt-0.5">{data.message}</p>
+                {data.booking && (
+                  <p className="text-blue-600 text-xs font-bold mt-1">{data.booking.reference} · {formatPrice(data.booking.amount)}</p>
+                )}
+              </div>
+              <button onClick={() => toast.dismiss(t.id)}><X className="w-4 h-4 text-gray-400" /></button>
+            </div>
+          ), { duration: 8000 });
+          fetchAll();
+        }
+
+        if (data.type === 'payment_received') {
+          toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} bg-white border border-green-200 shadow-lg rounded-xl p-4 flex items-start space-x-3 max-w-sm`}>
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-800 text-sm">💳 Payment Received!</p>
+                <p className="text-gray-600 text-xs mt-0.5">{data.message}</p>
+                {data.booking && (
+                  <p className="text-green-600 text-xs font-bold mt-1">{data.booking.reference} · {formatPrice(data.booking.amount)}</p>
+                )}
+              </div>
+              <button onClick={() => toast.dismiss(t.id)}><X className="w-4 h-4 text-gray-400" /></button>
+            </div>
+          ), { duration: 8000 });
+          fetchAll();
+        }
+      };
+
+      es.onerror = () => {
+        es.close();
+        // Reconnect after 5s
+        setTimeout(connectSSE, 5000);
+      };
+    } catch (e) {}
+  };
+
+  const fetchAll = () => {
     fetchStats();
     fetchBookings();
     fetchUsers();
-  }, []);
+  };
 
   const fetchStats = async () => {
     try {
@@ -75,48 +173,159 @@ const AdminPage = () => {
     }
   };
 
+  const updateUserRole = async (userId, role, userName) => {
+    if (!window.confirm(`Change ${userName}'s role to ${role}?`)) return;
+    setUpdatingRole(userId);
+    try {
+      await axios.patch(`${API_URL}/admin/users/${userId}/role`, { role }, { headers });
+      toast.success(`${userName} is now ${role}`);
+      fetchUsers();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to update role');
+    } finally {
+      setUpdatingRole(null);
+    }
+  };
+
+  const markAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+  };
+
+  const filteredUsers = users.filter(u =>
+    `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
+  const filteredBookings = bookings.filter(b =>
+    `${b.bookingReference} ${b.origin} ${b.destination} ${b.user?.firstName} ${b.user?.lastName}`.toLowerCase().includes(bookingSearch.toLowerCase())
+  );
+
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+        <p className="text-gray-500 text-sm">Loading admin panel...</p>
+      </div>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gray-900 text-white py-4 px-6">
+
+      {/* Admin Top Bar */}
+      <div className="bg-gray-900 text-white py-3 px-6 border-b border-gray-700">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Plane className="w-6 h-6 text-blue-400" />
-            <span className="text-xl font-bold">Aerwiz Admin</span>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Shield className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <span className="text-white font-bold">Aerwiz Admin</span>
+              <span className="text-gray-400 text-xs ml-2">Control Panel</span>
+            </div>
           </div>
+
           <div className="flex items-center space-x-4">
-            <span className="text-gray-400 text-sm">{user?.email}</span>
-            <button onClick={() => { logout(); navigate('/'); }} className="flex items-center space-x-1 text-gray-400 hover:text-white text-sm">
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
+            {/* Notification Bell */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => { setShowNotifications(!showNotifications); if (!showNotifications) markAllRead(); }}
+                className="relative p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                {unreadCount > 0 ? (
+                  <BellRing className="w-5 h-5 text-yellow-400 animate-pulse" />
+                ) : (
+                  <Bell className="w-5 h-5 text-gray-400" />
+                )}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50">
+                  <div className="px-4 py-3 bg-gray-900 flex items-center justify-between">
+                    <span className="text-white font-bold text-sm">Notifications</span>
+                    <button onClick={markAllRead} className="text-gray-400 hover:text-white text-xs">Mark all read</button>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-400 text-sm">
+                        <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        <p>No notifications yet</p>
+                        <p className="text-xs mt-1">New bookings will appear here</p>
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div key={notif.id} className={`px-4 py-3 border-b border-gray-50 hover:bg-gray-50 ${!notif.read ? 'bg-blue-50' : ''}`}>
+                          <div className="flex items-start space-x-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'new_booking' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                              {notif.type === 'new_booking'
+                                ? <Plane className="w-3.5 h-3.5 text-blue-600" />
+                                : <CreditCard className="w-3.5 h-3.5 text-green-600" />
+                              }
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800">
+                                {notif.type === 'new_booking' ? '✈️ New Booking' : '💳 Payment Received'}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5 truncate">{notif.message}</p>
+                              {notif.booking && (
+                                <div className="flex items-center justify-between mt-1">
+                                  <span className="text-xs font-bold text-blue-600">{notif.booking.reference}</span>
+                                  <span className="text-xs font-bold text-gray-700">{formatPrice(notif.booking.amount)}</span>
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-400 mt-1">{formatTime(notif.time)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Refresh */}
+            <button onClick={fetchAll} className="p-2 rounded-lg hover:bg-gray-700 transition-colors" title="Refresh data">
+              <RefreshCw className="w-4 h-4 text-gray-400" />
             </button>
+
+            <div className="flex items-center space-x-2 border-l border-gray-700 pl-4">
+              <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
+              </div>
+              <span className="text-gray-300 text-sm hidden sm:block">{user?.firstName}</span>
+              <button onClick={() => { logout(); navigate('/'); }}
+                className="text-gray-400 hover:text-red-400 text-xs ml-2 transition-colors">
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             {[
-              { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'blue' },
-              { label: 'Total Bookings', value: stats.totalBookings, icon: Plane, color: 'green' },
-              { label: 'Total Revenue', value: formatPrice(stats.totalRevenue), icon: CreditCard, color: 'purple' },
-              { label: 'Pending Bookings', value: stats.bookingsByStatus.find(b => b.status === 'PENDING')?._count?.status || 0, icon: TrendingUp, color: 'orange' }
+              { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'blue', bg: 'bg-blue-50', text: 'text-blue-600' },
+              { label: 'Total Bookings', value: stats.totalBookings, icon: Plane, color: 'green', bg: 'bg-green-50', text: 'text-green-600' },
+              { label: 'Total Revenue', value: formatPrice(stats.totalRevenue), icon: CreditCard, color: 'purple', bg: 'bg-purple-50', text: 'text-purple-600' },
+              { label: 'Pending', value: stats.bookingsByStatus.find(b => b.status === 'PENDING')?._count?.status || 0, icon: Clock, color: 'orange', bg: 'bg-orange-50', text: 'text-orange-600' }
             ].map((stat) => (
-              <div key={stat.label} className="bg-white rounded-xl shadow-sm p-6 flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-${stat.color}-100`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}-600`} />
+              <div key={stat.label} className="bg-white rounded-xl shadow-sm p-4 sm:p-5 flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.bg} flex-shrink-0`}>
+                  <stat.icon className={`w-5 h-5 ${stat.text}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                  <p className="text-gray-500 text-sm">{stat.label}</p>
+                  <p className="text-xl font-bold text-gray-800">{stat.value}</p>
+                  <p className="text-gray-500 text-xs">{stat.label}</p>
                 </div>
               </div>
             ))}
@@ -124,20 +333,28 @@ const AdminPage = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
-          {['overview', 'bookings', 'users'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`pb-3 px-1 font-medium text-sm capitalize transition-colors ${activeTab === tab ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
-              {tab === 'overview' ? 'Overview' : tab === 'bookings' ? `Bookings (${bookings.length})` : `Users (${users.length})`}
+        <div className="flex space-x-1 mb-6 bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+          {[
+            { id: 'overview', label: 'Overview' },
+            { id: 'bookings', label: `Bookings (${bookings.length})` },
+            { id: 'users', label: `Users (${users.length})` },
+            { id: 'notifications', label: `Alerts ${unreadCount > 0 ? `(${unreadCount})` : ''}` },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+              {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Overview Tab */}
+        {/* OVERVIEW TAB */}
         {activeTab === 'overview' && stats && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="font-bold text-gray-800 mb-4">Bookings by Status</h3>
+              <h3 className="font-bold text-gray-800 mb-4 flex items-center space-x-2">
+                <TrendingUp className="w-4 h-4 text-blue-600" />
+                <span>Bookings by Status</span>
+              </h3>
               <div className="space-y-3">
                 {stats.bookingsByStatus.map(item => (
                   <div key={item.status} className="flex items-center justify-between">
@@ -151,18 +368,21 @@ const AdminPage = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="font-bold text-gray-800 mb-4">Top Airlines</h3>
+              <h3 className="font-bold text-gray-800 mb-4 flex items-center space-x-2">
+                <Plane className="w-4 h-4 text-blue-600" />
+                <span>Top Airlines</span>
+              </h3>
               <div className="space-y-3">
                 {stats.bookingsByAirline.map(item => (
                   <div key={item.airline} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <img src={`https://pics.avs.io/40/40/${item.airline}.png`} alt={item.airline}
-                        className="w-8 h-8 rounded-full object-contain bg-gray-50 p-1"
+                        className="w-7 h-7 rounded object-contain bg-gray-50 p-0.5"
                         onError={(e) => { e.target.style.display = 'none'; }} />
-                      <span className="font-medium text-gray-700">{item.airline}</span>
+                      <span className="font-medium text-gray-700 text-sm">{item.airline}</span>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-800">{item._count.airline} booking{item._count.airline > 1 ? 's' : ''}</p>
+                      <p className="font-bold text-gray-800 text-sm">{item._count.airline} bookings</p>
                       <p className="text-xs text-gray-500">{formatPrice(item._sum.totalAmount)}</p>
                     </div>
                   </div>
@@ -172,18 +392,20 @@ const AdminPage = () => {
 
             <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
               <h3 className="font-bold text-gray-800 mb-4">Recent Bookings</h3>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {stats.recentBookings.map(booking => (
-                  <div key={booking.id} className="flex items-center justify-between py-2 border-b border-gray-50">
+                  <div key={booking.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                     <div className="flex items-center space-x-3">
-                      <Plane className="w-5 h-5 text-blue-500" />
+                      <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
+                        <Plane className="w-4 h-4 text-blue-500" />
+                      </div>
                       <div>
-                        <p className="font-medium text-gray-800">{booking.origin} → {booking.destination}</p>
-                        <p className="text-xs text-gray-400">{booking.user.firstName} {booking.user.lastName} · {booking.bookingReference}</p>
+                        <p className="font-medium text-gray-800 text-sm">{booking.origin} → {booking.destination}</p>
+                        <p className="text-xs text-gray-400">{booking.user?.firstName} {booking.user?.lastName} · <span className="font-mono">{booking.bookingReference}</span></p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-blue-600">{formatPrice(booking.totalAmount)}</p>
+                      <p className="font-bold text-blue-600 text-sm">{formatPrice(booking.totalAmount)}</p>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${STATUS_COLORS[booking.status] || 'bg-gray-100'}`}>
                         {booking.status}
                       </span>
@@ -195,77 +417,216 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* Bookings Tab */}
+        {/* BOOKINGS TAB */}
         {activeTab === 'bookings' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {['Reference', 'Customer', 'Route', 'Date', 'Amount', 'Status', 'Action'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {bookings.map(booking => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-mono font-bold text-blue-600">{booking.bookingReference}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{booking.user.firstName} {booking.user.lastName}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-800">{booking.origin} → {booking.destination}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{formatDate(booking.departureDate)}</td>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-800">{formatPrice(booking.totalAmount)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${STATUS_COLORS[booking.status] || 'bg-gray-100'}`}>
-                        {booking.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <select value={booking.status} onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 outline-none">
-                        <option value="PENDING">PENDING</option>
-                        <option value="PAYMENT_PENDING">PAYMENT_PENDING</option>
-                        <option value="CONFIRMED">CONFIRMED</option>
-                        <option value="CANCELLED">CANCELLED</option>
-                        <option value="COMPLETED">COMPLETED</option>
-                      </select>
-                    </td>
+          <div>
+            <div className="mb-4 flex items-center space-x-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search bookings..."
+                  value={bookingSearch}
+                  onChange={(e) => setBookingSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <span className="text-sm text-gray-500">{filteredBookings.length} results</span>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+              <table className="w-full min-w-[700px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {['Reference', 'Customer', 'Route', 'Date', 'Amount', 'Status', 'Update Status'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredBookings.map(booking => (
+                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm font-mono font-bold text-blue-600">{booking.bookingReference}</td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm font-medium text-gray-800">{booking.user?.firstName} {booking.user?.lastName}</p>
+                        <p className="text-xs text-gray-400">{booking.user?.email}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{booking.origin} → {booking.destination}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{formatDate(booking.departureDate)}</td>
+                      <td className="px-4 py-3 text-sm font-bold text-gray-800">{formatPrice(booking.totalAmount)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${STATUS_COLORS[booking.status] || 'bg-gray-100'}`}>
+                          {booking.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={booking.status}
+                          onChange={(e) => updateBookingStatus(booking.id, e.target.value)}
+                          className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        >
+                          <option value="PENDING">PENDING</option>
+                          <option value="PAYMENT_PENDING">PAYMENT PENDING</option>
+                          <option value="CONFIRMED">CONFIRMED</option>
+                          <option value="CANCELLED">CANCELLED</option>
+                          <option value="COMPLETED">COMPLETED</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredBookings.length === 0 && (
+                <div className="py-12 text-center text-gray-400">
+                  <Plane className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p>No bookings found</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Users Tab */}
+        {/* USERS TAB - with Role Management */}
         {activeTab === 'users' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  {['Name', 'Email', 'Phone', 'Role', 'Bookings', 'Joined'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {users.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-800">{user.firstName} {user.lastName}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{user.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{user.phone || '-'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-bold text-gray-800">{user._count.bookings}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{formatDate(user.createdAt)}</td>
+          <div>
+            <div className="mb-4 flex items-center space-x-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <span className="text-sm text-gray-500">{filteredUsers.length} users</span>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+              <table className="w-full min-w-[650px]">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    {['User', 'Email', 'Phone', 'Current Role', 'Bookings', 'Joined', 'Change Role'].map(h => (
+                      <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredUsers.map(u => (
+                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-blue-600 text-xs font-bold">{u.firstName?.[0]}{u.lastName?.[0]}</span>
+                          </div>
+                          <span className="text-sm font-medium text-gray-800">{u.firstName} {u.lastName}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{u.email}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{u.phone || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center space-x-1 w-fit ${u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {u.role === 'ADMIN' ? <ShieldCheck className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                          <span>{u.role}</span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-bold text-gray-800">{u._count.bookings}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{formatDate(u.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        {u.id === user?.id ? (
+                          <span className="text-xs text-gray-400 italic">You</span>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            {u.role === 'USER' ? (
+                              <button
+                                onClick={() => updateUserRole(u.id, 'ADMIN', `${u.firstName} ${u.lastName}`)}
+                                disabled={updatingRole === u.id}
+                                className="flex items-center space-x-1 px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                              >
+                                {updatingRole === u.id ? (
+                                  <span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin inline-block" />
+                                ) : (
+                                  <ShieldCheck className="w-3 h-3" />
+                                )}
+                                <span>Make Admin</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => updateUserRole(u.id, 'USER', `${u.firstName} ${u.lastName}`)}
+                                disabled={updatingRole === u.id}
+                                className="flex items-center space-x-1 px-3 py-1.5 bg-gray-500 text-white text-xs font-medium rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+                              >
+                                {updatingRole === u.id ? (
+                                  <span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin inline-block" />
+                                ) : (
+                                  <Shield className="w-3 h-3" />
+                                )}
+                                <span>Remove Admin</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredUsers.length === 0 && (
+                <div className="py-12 text-center text-gray-400">
+                  <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p>No users found</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
+
+        {/* NOTIFICATIONS TAB */}
+        {activeTab === 'notifications' && (
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-bold text-gray-800">Activity Feed</h3>
+              <button onClick={markAllRead} className="text-sm text-blue-600 hover:text-blue-700">Mark all read</button>
+            </div>
+            {notifications.length === 0 ? (
+              <div className="py-16 text-center text-gray-400">
+                <Bell className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="font-medium">No activity yet</p>
+                <p className="text-sm mt-1">New bookings and payments will appear here in real-time</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {notifications.map(notif => (
+                  <div key={notif.id} className={`px-6 py-4 hover:bg-gray-50 transition-colors ${!notif.read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'new_booking' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                        {notif.type === 'new_booking'
+                          ? <Plane className="w-5 h-5 text-blue-600" />
+                          : <CreditCard className="w-5 h-5 text-green-600" />
+                        }
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-800">
+                          {notif.type === 'new_booking' ? '✈️ New Booking Received' : '💳 Payment Confirmed'}
+                        </p>
+                        <p className="text-gray-600 text-sm mt-0.5">{notif.message}</p>
+                        {notif.booking && (
+                          <div className="mt-2 bg-gray-50 rounded-lg p-3 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div><p className="text-gray-400">Reference</p><p className="font-bold font-mono text-blue-600">{notif.booking.reference}</p></div>
+                            <div><p className="text-gray-400">Route</p><p className="font-medium">{notif.booking.route}</p></div>
+                            <div><p className="text-gray-400">Amount</p><p className="font-bold text-green-600">{formatPrice(notif.booking.amount)}</p></div>
+                            <div><p className="text-gray-400">Passenger</p><p className="font-medium">{notif.booking.passenger || '—'}</p></div>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-2">{formatDate(notif.time)} at {formatTime(notif.time)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
