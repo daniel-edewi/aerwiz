@@ -207,7 +207,7 @@ const AlertsPage = () => {
                   <p className="text-xs text-gray-400 mt-1">Last checked: {new Date(alert.lastChecked).toLocaleString()}</p>
                 )}
                 {alert.triggeredAt && (
-                  <p className="text-xs text-green-600 mt-1 font-medium">✅ Alert triggered on {new Date(alert.triggeredAt).toLocaleString()}</p>
+                  <p className="text-xs text-green-600 mt-1 font-medium">Alert triggered on {new Date(alert.triggeredAt).toLocaleString()}</p>
                 )}
               </div>
             ))}

@@ -47,11 +47,11 @@ const Navbar = () => {
         <div className="flex whitespace-nowrap animate-marquee">
           {[...Array(3)].map((_, i) => (
             <span key={i} className="inline-flex items-center space-x-8 px-4 text-sm">
-              <span>✈️ Use promo code <strong>AERWIZ20</strong> for 20% off your next booking!</span>
-              <span>🌍 Fly to London, Dubai, New York and more — book now!</span>
-              <span>💳 Pay securely in Naira with Paystack</span>
+              <span>Use promo code <strong>AERWIZ20</strong> for 20% off your next booking!</span>
+              <span>Fly to London, Dubai, New York and more — book now!</span>
+              <span>Pay securely in Naira with Paystack</span>
               <span>🎁 Refer a friend and earn rewards on Aerwiz</span>
-              <span>📞 24/7 Support: Call or WhatsApp +234 800 000 0000</span>
+              <span>24/7 Support: Call or WhatsApp +234 800 000 0000</span>
             </span>
           ))}
         </div>

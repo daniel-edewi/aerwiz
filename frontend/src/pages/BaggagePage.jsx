@@ -274,7 +274,7 @@ const BaggagePage = () => {
                   </div>
                 ) : (
                   <div className="bg-green-50 rounded-lg p-3 mb-4">
-                    <p className="text-xs text-green-700">✅ Your bags are within the free allowance!</p>
+                    <p className="text-xs text-green-700">Your bags are within the free allowance!</p>
                   </div>
                 )}
 

@@ -82,7 +82,7 @@ const AirportSearch = ({ value, onChange, placeholder = 'City or airport', label
     setResults([]);
   };
 
-  const getTypeIcon = (subType) => subType === 'CITY' ? '🏙️' : '✈️';
+  const getTypeIcon = (subType) => subType === 'CITY' ? 'C' : 'A';
 
   return (
     <div ref={wrapperRef} className="relative">

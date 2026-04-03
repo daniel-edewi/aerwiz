@@ -229,7 +229,7 @@ const RegisterPage = () => {
           </p>
 
           <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center space-x-1">
-            <span>🔒</span>
+            
             <span>Your data is protected with SSL encryption</span>
           </p>
         </div>
