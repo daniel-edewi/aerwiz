@@ -12,11 +12,12 @@ app.set('trust proxy', 1);
 
 app.use(compression());
 
-// CORS
-app.use(cors({
-  origin: ['https://aerwiz.vercel.app', 'http://localhost:3000'],
-  credentials: true
-}));
+origin: [
+  'https://aerwiz.com',
+  'https://www.aerwiz.com',
+  'https://aerwiz.vercel.app',
+  'http://localhost:3000'
+],
 
 // Rate limiting
 const limiter = rateLimit({
