@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users, Plus, Trash2, FileSearch, ChevronRight, Star, Shield, Globe, Mail, TrendingDown, ArrowRight } from 'lucide-react';
+import {
+  Plane, Search, Calendar, Users, Plus, Trash2,
+  FileSearch, ChevronRight, Mail, TrendingDown, ArrowRight,
+  Lock, Clock, Tag, CheckCircle
+} from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
 import axios from 'axios';
 
@@ -19,15 +23,19 @@ const AirplaneLoader = () => (
   </span>
 );
 
-// Trending deals — real popular routes from Lagos with landmark images
-// Prices are approximate economy fares (NGN). Update as needed.
-const TRENDING_DEALS = [
+// Always returns a date N days from TODAY — never in the past
+const futureDate = (daysFromNow) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  return d.toISOString().split('T')[0];
+};
+
+const getTrendingDeals = () => [
   {
     from: 'LOS', to: 'LHR',
     fromCity: 'Lagos', toCity: 'London',
-    country: 'United Kingdom',
     price: 780000,
-    departureDate: '2025-07-15',
+    departureDate: futureDate(21),
     image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80',
     landmark: 'Tower Bridge, London',
     tag: 'Most Popular',
@@ -36,9 +44,8 @@ const TRENDING_DEALS = [
   {
     from: 'LOS', to: 'DXB',
     fromCity: 'Lagos', toCity: 'Dubai',
-    country: 'UAE',
     price: 520000,
-    departureDate: '2025-07-20',
+    departureDate: futureDate(14),
     image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80',
     landmark: 'Burj Khalifa, Dubai',
     tag: 'Best Value',
@@ -47,9 +54,8 @@ const TRENDING_DEALS = [
   {
     from: 'LOS', to: 'JFK',
     fromCity: 'Lagos', toCity: 'New York',
-    country: 'United States',
     price: 950000,
-    departureDate: '2025-08-01',
+    departureDate: futureDate(30),
     image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80',
     landmark: 'Manhattan Skyline',
     tag: 'Hot Deal',
@@ -58,20 +64,18 @@ const TRENDING_DEALS = [
   {
     from: 'ABV', to: 'DOH',
     fromCity: 'Abuja', toCity: 'Doha',
-    country: 'Qatar',
     price: 490000,
-    departureDate: '2025-07-25',
-    image: 'https://images.unsplash.com/photo-1637573048046-29c0aeb60413?w=600&q=80',
-    landmark: 'Doha Skyline',
+    departureDate: futureDate(18),
+    image: 'https://images.unsplash.com/photo-1537511446984-935f663eb1f4?w=600&q=80',
+    landmark: 'Doha Skyline, Qatar',
     tag: 'Low Fare',
     tagColor: 'bg-purple-600',
   },
   {
     from: 'LOS', to: 'CDG',
     fromCity: 'Lagos', toCity: 'Paris',
-    country: 'France',
     price: 720000,
-    departureDate: '2025-08-10',
+    departureDate: futureDate(25),
     image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
     landmark: 'Eiffel Tower, Paris',
     tag: 'Trending',
@@ -80,9 +84,8 @@ const TRENDING_DEALS = [
   {
     from: 'LOS', to: 'NBO',
     fromCity: 'Lagos', toCity: 'Nairobi',
-    country: 'Kenya',
     price: 185000,
-    departureDate: '2025-07-18',
+    departureDate: futureDate(10),
     image: 'https://images.unsplash.com/photo-1611348524140-53c9a25263d6?w=600&q=80',
     landmark: 'Nairobi National Park',
     tag: 'Africa Deal',
@@ -90,11 +93,52 @@ const TRENDING_DEALS = [
   },
 ];
 
-const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
+const formatPrice = (amount) =>
+  new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
+
+const formatDisplayDate = (dateStr) =>
+  new Date(dateStr).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const STATUS_COLORS = {
+  PENDING: 'bg-yellow-100 text-yellow-700',
+  PAYMENT_PENDING: 'bg-orange-100 text-orange-700',
+  CONFIRMED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-red-100 text-red-700',
+  COMPLETED: 'bg-blue-100 text-blue-700',
+  FAILED: 'bg-red-100 text-red-700',
+};
+
+// Official brand logos via Wikimedia CDN
+const PARTNERS = [
+  {
+    name: 'Amadeus',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Amadeus_IT_Group_logo.svg/320px-Amadeus_IT_Group_logo.svg.png',
+  },
+  {
+    name: 'Paystack',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Paystack_Logo.png/320px-Paystack_Logo.png',
+  },
+  {
+    name: 'IATA',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/IATA_logo.svg/320px-IATA_logo.svg.png',
+  },
+  {
+    name: 'Visa',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png',
+  },
+  {
+    name: 'Mastercard',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/320px-Mastercard-logo.svg.png',
+  },
+];
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { searchParams, setSearchParams, setSearchResults, setIsSearching, setMultiCityLeg, addMultiCityLeg, removeMultiCityLeg } = useFlightStore();
+  const {
+    searchParams, setSearchParams, setSearchResults,
+    setIsSearching, setMultiCityLeg, addMultiCityLeg, removeMultiCityLeg,
+  } = useFlightStore();
+
   const [loading, setLoading] = useState(false);
   const [dealLoading, setDealLoading] = useState(null);
   const [bookingRef, setBookingRef] = useState('');
@@ -103,6 +147,8 @@ const HomePage = () => {
   const [foundBooking, setFoundBooking] = useState(null);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+
+  const TRENDING_DEALS = getTrendingDeals();
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -117,13 +163,15 @@ const HomePage = () => {
           setLoading(false); setIsSearching(false); return;
         }
         const allResults = await Promise.all(
-          legs.map(leg => flightsAPI.search({
-            origin: leg.origin.toUpperCase(),
-            destination: leg.destination.toUpperCase(),
-            departureDate: leg.departureDate,
-            adults: searchParams.adults,
-            cabinClass: searchParams.cabinClass
-          }).then(r => r.data.data).catch(() => []))
+          legs.map(leg =>
+            flightsAPI.search({
+              origin: leg.origin.toUpperCase(),
+              destination: leg.destination.toUpperCase(),
+              departureDate: leg.departureDate,
+              adults: searchParams.adults,
+              cabinClass: searchParams.cabinClass,
+            }).then(r => r.data.data).catch(() => [])
+          )
         );
         results = allResults.flat();
       } else {
@@ -137,7 +185,7 @@ const HomePage = () => {
           departureDate: searchParams.departureDate,
           returnDate: searchParams.tripType === 'ROUND_TRIP' ? searchParams.returnDate : undefined,
           adults: searchParams.adults,
-          cabinClass: searchParams.cabinClass
+          cabinClass: searchParams.cabinClass,
         });
         results = response.data.data;
       }
@@ -150,7 +198,6 @@ const HomePage = () => {
     }
   };
 
-  // Click trending deal → search flights for that route + date and navigate
   const handleDealClick = async (deal) => {
     setDealLoading(deal.to);
     setIsSearching(true);
@@ -161,19 +208,18 @@ const HomePage = () => {
         departureDate: deal.departureDate,
         tripType: 'ONE_WAY',
         adults: 1,
-        cabinClass: 'ECONOMY'
+        cabinClass: 'ECONOMY',
       });
       const response = await flightsAPI.search({
         origin: deal.from,
         destination: deal.to,
         departureDate: deal.departureDate,
         adults: 1,
-        cabinClass: 'ECONOMY'
+        cabinClass: 'ECONOMY',
       });
       setSearchResults(response.data.data);
       navigate('/flights');
     } catch (error) {
-      // Even if search fails, navigate to flights page with params pre-filled
       toast('Showing available flights for this route');
       navigate('/flights');
     } finally {
@@ -184,7 +230,8 @@ const HomePage = () => {
 
   const handleManageBooking = async (e) => {
     e.preventDefault();
-    if (!bookingRef.trim() || !lastName.trim()) return toast.error('Please enter your booking reference and last name');
+    if (!bookingRef.trim() || !lastName.trim())
+      return toast.error('Please enter your booking reference and last name');
     setManageLoading(true);
     setFoundBooking(null);
     try {
@@ -204,38 +251,36 @@ const HomePage = () => {
     }
   };
 
-  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-
-  const STATUS_COLORS = {
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    PAYMENT_PENDING: 'bg-orange-100 text-orange-700',
-    CONFIRMED: 'bg-green-100 text-green-700',
-    CANCELLED: 'bg-red-100 text-red-700',
-    COMPLETED: 'bg-blue-100 text-blue-700',
-    FAILED: 'bg-red-100 text-red-700'
-  };
-
   return (
     <div className="bg-white">
 
-      {/* Hero Section */}
+      {/* ══════════════════════════════════════
+          HERO
+      ══════════════════════════════════════ */}
       <div className="relative">
-        <div className="relative h-[420px] sm:h-[500px] overflow-hidden">
+        <div className="relative h-[440px] sm:h-[540px] overflow-hidden">
           <img
             src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1600&q=80"
             alt="Aircraft flying"
             className="w-full h-full object-cover"
             onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1578474846511-04ba529f0b88?w=1600&q=80'; }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-900/70 via-blue-800/50 to-white/90"></div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pb-24">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3 drop-shadow-lg">Going somewhere?</h1>
-            <p className="text-blue-100 text-lg sm:text-xl drop-shadow">We offer the best flight deals in the industry!</p>
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-950/85 via-blue-900/65 to-white/95"></div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 pb-32">
+            <p className="text-blue-300 text-xs sm:text-sm font-bold uppercase tracking-widest mb-4 drop-shadow">
+              Nigeria's Smartest Flight Booking Platform
+            </p>
+            <h1 className="text-4xl sm:text-6xl font-extrabold text-white mb-4 drop-shadow-lg leading-tight tracking-tight">
+              Better Flights.<br />Lower Prices.
+            </h1>
+            <p className="text-blue-100 text-base sm:text-xl drop-shadow font-medium">
+              Skip the Agent. Keep the Savings.
+            </p>
           </div>
         </div>
 
-        {/* Search Form */}
-        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 -mt-24 relative z-10 pb-8">
+        {/* Search card */}
+        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 -mt-28 relative z-10 pb-10">
           <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 border border-gray-100">
             <div className="flex space-x-1 mb-5 bg-gray-100 rounded-xl p-1">
               {['ONE_WAY', 'ROUND_TRIP', 'MULTI_CITY'].map((type) => (
@@ -351,7 +396,7 @@ const HomePage = () => {
               )}
 
               <button type="submit" disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center space-x-2 transition-colors disabled:opacity-70 text-base shadow-lg">
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center space-x-2 transition-colors disabled:opacity-70 text-base shadow-lg shadow-blue-200">
                 {loading ? <AirplaneLoader /> : (<><Search className="w-5 h-5" /><span>Search Flights</span></>)}
               </button>
             </form>
@@ -359,40 +404,54 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Features Strip */}
-      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {/* ══════════════════════════════════════
+          TRUST STRIP — Transparent Pricing, Secure Checkout, Instant Confirmations
+      ══════════════════════════════════════ */}
+      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[
-            { icon: <Star className="w-7 h-7 text-blue-600" />, title: 'Best Prices Guaranteed', desc: 'We search hundreds of airlines to find you the lowest fares available.' },
-            { icon: <Shield className="w-7 h-7 text-blue-600" />, title: 'Secure Payments', desc: 'Pay safely in Naira with Paystack. Your data is always protected.' },
-            { icon: <Globe className="w-7 h-7 text-blue-600" />, title: 'Worldwide Coverage', desc: 'Fly to over 500 destinations across Africa, Europe, Asia and beyond.' },
+            {
+              icon: <Tag className="w-6 h-6 text-blue-600" />,
+              title: 'Transparent Pricing',
+              desc: 'No hidden fees, no surprise charges. The price you see is exactly the price you pay — always.',
+            },
+            {
+              icon: <Lock className="w-6 h-6 text-blue-600" />,
+              title: 'Secure Checkout',
+              desc: 'Pay safely in Naira with Paystack. Bank-grade SSL encryption protects every transaction.',
+            },
+            {
+              icon: <CheckCircle className="w-6 h-6 text-blue-600" />,
+              title: 'Instant Confirmations',
+              desc: 'Receive your e-ticket and booking confirmation the moment your payment goes through.',
+            },
           ].map(f => (
             <div key={f.title} className="flex items-start space-x-4 p-5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">{f.icon}</div>
               <div>
                 <h3 className="font-bold text-gray-800 mb-1">{f.title}</h3>
-                <p className="text-gray-500 text-sm">{f.desc}</p>
+                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ===== TRENDING FLIGHT DEALS ===== */}
-      <div className="bg-gray-50 py-14 px-4">
+      {/* ══════════════════════════════════════
+          TRENDING FLIGHT DEALS
+      ══════════════════════════════════════ */}
+      <div className="bg-gray-50 py-14">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <div className="flex items-center space-x-2 mb-1">
-                <TrendingDown className="w-5 h-5 text-blue-600" />
-                <span className="text-blue-600 text-sm font-bold uppercase tracking-wide">Trending Now</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Flight Deals You'll Love</h2>
-              <p className="text-gray-500 mt-1">Real fares on popular routes from Nigeria — click to see live prices</p>
+          <div className="mb-8">
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingDown className="w-5 h-5 text-blue-600" />
+              <span className="text-blue-600 text-xs font-bold uppercase tracking-widest">Trending Now</span>
             </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Flight Deals You'll Love</h2>
+            <p className="text-gray-500 mt-1 text-sm">Popular routes from Nigeria — click any card to see live prices and book instantly</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {TRENDING_DEALS.map((deal) => (
               <div
                 key={deal.to}
@@ -405,47 +464,46 @@ const HomePage = () => {
                     src={deal.image}
                     alt={deal.toCity}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      e.target.src = `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80`;
-                    }}
+                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80'; }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
-
-                  {/* Tag */}
-                  <div className={`absolute top-3 left-3 ${deal.tagColor} text-white text-xs font-bold px-3 py-1 rounded-full`}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent"></div>
+                  <span className={`absolute top-3 left-3 ${deal.tagColor} text-white text-xs font-bold px-3 py-1 rounded-full shadow`}>
                     {deal.tag}
-                  </div>
-
-                  {/* Destination name overlay */}
+                  </span>
                   <div className="absolute bottom-3 left-3 right-3">
-                    <p className="text-white font-bold text-lg leading-tight">{deal.toCity}</p>
-                    <p className="text-white/80 text-xs">{deal.landmark}</p>
+                    <p className="text-white font-bold text-xl leading-tight">{deal.toCity}</p>
+                    <p className="text-white/75 text-xs mt-0.5">{deal.landmark}</p>
                   </div>
                 </div>
 
-                {/* Card body */}
+                {/* Body */}
                 <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2 text-gray-600 text-sm">
-                      <span className="font-semibold text-gray-800">{deal.fromCity}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center space-x-1.5 text-sm text-gray-700">
+                      <span className="font-semibold">{deal.fromCity}</span>
                       <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="font-semibold text-gray-800">{deal.toCity}</span>
+                      <span className="font-semibold">{deal.toCity}</span>
                     </div>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{deal.from} – {deal.to}</span>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full font-mono">{deal.from}–{deal.to}</span>
+                  </div>
+
+                  <div className="flex items-center space-x-1 text-xs text-gray-400 mb-3">
+                    <Calendar className="w-3 h-3 flex-shrink-0" />
+                    <span>Departs {formatDisplayDate(deal.departureDate)}</span>
                   </div>
 
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-xs text-gray-400 mb-0.5">From</p>
-                      <p className="text-xl font-bold text-blue-600">{formatPrice(deal.price)}</p>
-                      <p className="text-xs text-gray-400">Economy · One Way</p>
+                      <p className="text-xs text-gray-400">From</p>
+                      <p className="text-xl font-extrabold text-blue-600">{formatPrice(deal.price)}</p>
+                      <p className="text-xs text-gray-400">Economy · 1 Adult</p>
                     </div>
                     <button
                       disabled={dealLoading === deal.to}
-                      className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-70"
+                      className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-70 shadow-sm"
                     >
                       {dealLoading === deal.to ? (
-                        <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                       ) : (
                         <>
                           <span>Book Now</span>
@@ -461,145 +519,197 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Popular Routes */}
-      <div className="bg-white py-12 px-4">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Popular Routes</h2>
-          <p className="text-gray-500 mb-6">Most searched flights from Nigeria</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { from: 'LOS', to: 'LHR', fromCity: 'Lagos', toCity: 'London' },
-              { from: 'LOS', to: 'DXB', fromCity: 'Lagos', toCity: 'Dubai' },
-              { from: 'LOS', to: 'JFK', fromCity: 'Lagos', toCity: 'New York' },
-              { from: 'ABV', to: 'DOH', fromCity: 'Abuja', toCity: 'Doha' },
-              { from: 'LOS', to: 'CDG', fromCity: 'Lagos', toCity: 'Paris' },
-              { from: 'LOS', to: 'NBO', fromCity: 'Lagos', toCity: 'Nairobi' },
-              { from: 'ABV', to: 'DXB', fromCity: 'Abuja', toCity: 'Dubai' },
-              { from: 'LOS', to: 'ADD', fromCity: 'Lagos', toCity: 'Addis Ababa' },
-            ].map((route, index) => (
-              <div key={index}
-                onClick={() => {
-                  setSearchParams({ origin: route.from, destination: route.to, tripType: 'ONE_WAY' });
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
-                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center mb-2">
-                  <Plane className="w-4 h-4 text-blue-600" />
-                </div>
-                <p className="font-bold text-gray-800 text-sm group-hover:text-blue-600">{route.fromCity} to {route.toCity}</p>
-                <p className="text-xs text-gray-400 mt-1">{route.from} – {route.to}</p>
-                <div className="flex items-center text-blue-600 text-xs mt-2 font-medium">
-                  <span>Search</span>
-                  <ChevronRight className="w-3 h-3 ml-1" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Manage My Booking */}
-      <div id="manage-booking-section" className="bg-blue-700 py-12 px-4">
+      {/* ══════════════════════════════════════
+          MANAGE MY BOOKING — Professional redesign
+      ══════════════════════════════════════ */}
+      <div id="manage-booking-section" className="bg-white py-16 border-t border-gray-100">
         <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center space-x-3 mb-6">
-            <FileSearch className="w-6 h-6 text-white" />
-            <div>
-              <h2 className="text-white text-xl font-bold">Manage My Booking</h2>
-              <p className="text-blue-200 text-sm">Retrieve your booking using your reference number</p>
-            </div>
-          </div>
-          <form onSubmit={handleManageBooking} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-blue-200 text-xs font-medium mb-1">Booking Reference</label>
-              <input type="text" value={bookingRef} onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
-                placeholder="e.g. AWZABC123"
-                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-blue-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-white text-sm uppercase tracking-widest" />
-            </div>
-            <div>
-              <label className="block text-blue-200 text-xs font-medium mb-1">Passenger Last Name</label>
-              <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
-                placeholder="e.g. Edewi"
-                className="w-full bg-white bg-opacity-20 border border-white border-opacity-30 text-white placeholder-blue-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-white text-sm" />
-            </div>
-            <div className="flex items-end">
-              <button type="submit" disabled={manageLoading}
-                className="w-full bg-white text-blue-700 font-bold py-2.5 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-70 flex items-center justify-center space-x-2">
-                {manageLoading ? <AirplaneLoader /> : (<><Search className="w-4 h-4" /><span>Find Booking</span></>)}
-              </button>
-            </div>
-          </form>
 
-          {foundBooking && (
-            <div className="mt-6 bg-white rounded-xl p-5 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs text-gray-400">Booking Reference</p>
-                  <p className="text-xl font-bold text-blue-600 font-mono tracking-widest">{foundBooking.bookingReference}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${STATUS_COLORS[foundBooking.status] || 'bg-gray-100 text-gray-600'}`}>
-                  {foundBooking.status.replace('_', ' ')}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                <div><p className="text-xs text-gray-400">Route</p><p className="font-bold text-gray-800">{foundBooking.origin} to {foundBooking.destination}</p></div>
-                <div><p className="text-xs text-gray-400">Departure</p><p className="font-medium text-gray-700 text-sm">{formatDate(foundBooking.departureDate)}</p></div>
-                <div><p className="text-xs text-gray-400">Flight</p><p className="font-medium text-gray-700 text-sm">{foundBooking.flightNumber}</p></div>
-                <div><p className="text-xs text-gray-400">Total</p><p className="font-bold text-blue-600">{formatPrice(foundBooking.totalAmount)}</p></div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {foundBooking.status === 'PENDING' && (
-                  <button onClick={() => navigate('/dashboard')} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Complete Payment</button>
-                )}
-                {['CONFIRMED', 'PAYMENT_PENDING'].includes(foundBooking.status) && (
-                  <button onClick={() => navigate('/dashboard')} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">View Full Booking</button>
-                )}
-                <button onClick={() => { setFoundBooking(null); setBookingRef(''); setLastName(''); }}
-                  className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">Clear</button>
-              </div>
+          {/* Header */}
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-50 rounded-2xl mb-4 shadow-sm">
+              <FileSearch className="w-7 h-7 text-blue-600" />
             </div>
-          )}
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Manage Your Booking</h2>
+            <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
+              Retrieve your booking details, check travel status, and manage your trip anytime — no login required.
+            </p>
+          </div>
+
+          {/* Form card */}
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+            <form onSubmit={handleManageBooking} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Booking Reference
+                  </label>
+                  <div className="relative">
+                    <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={bookingRef}
+                      onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
+                      placeholder="e.g. AWZ123456"
+                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono tracking-widest bg-gray-50 transition-colors"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5">Found in your confirmation email</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                    Lead Passenger Last Name
+                  </label>
+                  <div className="relative">
+                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="e.g. Johnson"
+                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50 transition-colors"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5">As it appears on your passport</p>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={manageLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors disabled:opacity-70 flex items-center justify-center space-x-2 shadow-md shadow-blue-100 text-sm"
+              >
+                {manageLoading ? <AirplaneLoader /> : (
+                  <>
+                    <Search className="w-4 h-4" />
+                    <span>Retrieve Booking</span>
+                  </>
+                )}
+              </button>
+
+              {/* Trust badges */}
+              <div className="flex items-center justify-center flex-wrap gap-5 pt-1">
+                <div className="flex items-center space-x-1.5 text-xs text-gray-400">
+                  <Lock className="w-3.5 h-3.5 text-green-500" />
+                  <span>Secure lookup</span>
+                </div>
+                <div className="flex items-center space-x-1.5 text-xs text-gray-400">
+                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                  <span>No login required</span>
+                </div>
+                <div className="flex items-center space-x-1.5 text-xs text-gray-400">
+                  <Clock className="w-3.5 h-3.5 text-green-500" />
+                  <span>Real-time status</span>
+                </div>
+              </div>
+            </form>
+
+            {/* Result card */}
+            {foundBooking && (
+              <div className="mt-6 bg-blue-50 rounded-xl border border-blue-100 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Booking Reference</p>
+                    <p className="text-2xl font-extrabold text-blue-600 font-mono tracking-widest">{foundBooking.bookingReference}</p>
+                  </div>
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${STATUS_COLORS[foundBooking.status] || 'bg-gray-100 text-gray-600'}`}>
+                    {foundBooking.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5 bg-white rounded-xl p-4 border border-blue-100">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Route</p>
+                    <p className="font-bold text-gray-900">{foundBooking.origin} → {foundBooking.destination}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Departure</p>
+                    <p className="font-semibold text-gray-700 text-sm">{formatDisplayDate(foundBooking.departureDate)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Flight</p>
+                    <p className="font-semibold text-gray-700 text-sm">{foundBooking.flightNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-0.5">Total Paid</p>
+                    <p className="font-bold text-blue-600">{formatPrice(foundBooking.totalAmount)}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {foundBooking.status === 'PENDING' && (
+                    <button onClick={() => navigate('/dashboard')}
+                      className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                      Complete Payment
+                    </button>
+                  )}
+                  {['CONFIRMED', 'PAYMENT_PENDING'].includes(foundBooking.status) && (
+                    <button onClick={() => navigate('/dashboard')}
+                      className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
+                      View Full Booking
+                    </button>
+                  )}
+                  <button onClick={() => { setFoundBooking(null); setBookingRef(''); setLastName(''); }}
+                    className="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Trust Partners */}
-      <div className="bg-white py-10 px-4 border-y border-gray-100">
+      {/* ══════════════════════════════════════
+          TRUSTED PARTNERS — official logos
+      ══════════════════════════════════════ */}
+      <div className="bg-gray-50 py-10 border-t border-gray-100">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
-          <p className="text-center text-gray-400 text-sm font-medium mb-6 uppercase tracking-wide">Trusted Partners</p>
-          <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-            {[
-              { name: 'Amadeus', color: '#0077BE' },
-              { name: 'Paystack', color: '#00C3F7' },
-              { name: 'IATA', color: '#003366' },
-              { name: 'Visa', color: '#1A1F71' },
-              { name: 'Mastercard', color: '#EB001B' },
-            ].map(p => (
-              <div key={p.name}>
-                <span className="text-lg font-bold" style={{ color: p.color }}>{p.name}</span>
+          <p className="text-center text-gray-400 text-xs font-semibold mb-8 uppercase tracking-widest">Trusted Partners</p>
+          <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
+            {PARTNERS.map(p => (
+              <div key={p.name} className="flex items-center justify-center h-10 opacity-50 hover:opacity-90 transition-opacity duration-200">
+                <img
+                  src={p.logo}
+                  alt={p.name}
+                  className="h-8 sm:h-9 w-auto object-contain"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
+                  }}
+                />
+                <span className="text-sm font-bold text-gray-500 hidden">{p.name}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Newsletter */}
-      <div className="bg-gray-50 py-12 px-4">
-        <div className="max-w-xl mx-auto text-center">
-          <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      {/* ══════════════════════════════════════
+          NEWSLETTER
+      ══════════════════════════════════════ */}
+      <div className="bg-white py-12 border-t border-gray-100">
+        <div className="max-w-xl mx-auto text-center px-4">
+          <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
             <Mail className="w-7 h-7 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Get the latest travel deals</h2>
-          <p className="text-gray-500 mb-6">Subscribe to our newsletter and never miss a great deal</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Get the Latest Travel Deals</h2>
+          <p className="text-gray-500 mb-6 text-sm">Subscribe and never miss a flight deal or exclusive promo offer again.</p>
           {subscribed ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-medium">
-              Thank you for subscribing! You'll receive the best deals in your inbox.
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-medium text-sm">
+              Thank you for subscribing! You'll receive the best deals straight to your inbox.
             </div>
           ) : (
             <div className="flex space-x-2">
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email address"
-                className="flex-1 border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-              <button onClick={() => { if (email) { setSubscribed(true); toast.success('Subscribed successfully!'); } }}
-                className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors text-sm whitespace-nowrap">
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-gray-50"
+              />
+              <button
+                onClick={() => { if (email) { setSubscribed(true); toast.success('Subscribed successfully!'); } }}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors text-sm whitespace-nowrap"
+              >
                 Subscribe
               </button>
             </div>

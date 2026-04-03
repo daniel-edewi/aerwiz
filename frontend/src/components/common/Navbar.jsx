@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
-import { Plane, Menu, X, ChevronDown, Bell, LogOut, Settings, FileSearch, Luggage } from 'lucide-react';
+import { Plane, Menu, X, ChevronDown, Bell, LogOut, Settings, FileSearch, Luggage, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Navbar = () => {
@@ -33,33 +33,44 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { label: 'Flights', action: () => { navigate('/'); setMenuOpen(false); }, icon: Plane },
-    { label: 'Manage Booking', action: handleManageBooking, icon: FileSearch },
-    { label: 'Baggage', action: () => { navigate('/baggage'); setMenuOpen(false); }, icon: Luggage },
-    { label: 'Price Alerts', action: () => { navigate('/alerts'); setMenuOpen(false); }, icon: Bell },
+    { label: 'Flights',        action: () => { navigate('/');        setMenuOpen(false); }, icon: Plane       },
+    { label: 'Manage Booking', action: handleManageBooking,                                  icon: FileSearch  },
+    { label: 'Baggage',        action: () => { navigate('/baggage'); setMenuOpen(false); }, icon: Luggage     },
+    { label: 'Price Alerts',   action: () => { navigate('/alerts');  setMenuOpen(false); }, icon: Bell        },
+  ];
+
+  // Announcement messages — no emojis
+  const announcements = [
+    'Transparent pricing — no hidden fees, no surprises.',
+    'Secure checkout — bank-grade SSL on every transaction.',
+    'Instant confirmations — your e-ticket delivered immediately.',
+    '24/7 Support: Call or WhatsApp +234 800 000 0000',
   ];
 
   return (
     <div className="sticky top-0 z-50">
 
-      {/* Announcement Bar */}
+      {/* ── Announcement Bar ── */}
       <div className="bg-blue-700 text-white py-2 overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee">
+          {/* Duplicate 3× so the scroll looks seamless */}
           {[...Array(3)].map((_, i) => (
-            <span key={i} className="inline-flex items-center space-x-8 px-4 text-sm">
-              <span>Use promo code <strong>AERWIZ20</strong> for 20% off your next booking!</span>
-              <span>Fly to London, Dubai, New York and more — book now!</span>
-              <span>Pay securely in Naira with Paystack</span>
-              <span>🎁 Refer a friend and earn rewards on Aerwiz</span>
-              <span>24/7 Support: Call or WhatsApp +234 800 000 0000</span>
+            <span key={i} className="inline-flex items-center gap-10 px-6 text-xs sm:text-sm font-medium tracking-wide">
+              {announcements.map((msg, j) => (
+                <span key={j} className="flex items-center gap-2">
+                  {/* Subtle dot separator before each item */}
+                  <span className="w-1 h-1 rounded-full bg-blue-300 flex-shrink-0"></span>
+                  <span>{msg}</span>
+                </span>
+              ))}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Main Header */}
+      {/* ── Main Header ── */}
       <header className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
 
             {/* Logo */}
@@ -67,10 +78,10 @@ const Navbar = () => {
               className="flex items-center space-x-2 cursor-pointer flex-shrink-0"
               onClick={() => navigate('/')}
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
                 <Plane className="text-white w-4 h-4" />
               </div>
-              <span className="text-blue-700 text-xl font-bold">Aerwiz</span>
+              <span className="text-blue-700 text-xl font-extrabold tracking-tight">Aerwiz</span>
             </div>
 
             {/* Desktop Nav Links */}
@@ -108,10 +119,7 @@ const Navbar = () => {
 
                   {userMenuOpen && (
                     <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setUserMenuOpen(false)}
-                      />
+                      <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                       <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
                         <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
                           <p className="text-sm font-bold text-gray-800">{user?.firstName} {user?.lastName}</p>
@@ -119,10 +127,12 @@ const Navbar = () => {
                         </div>
                         <div className="py-1">
                           {[
-                            { label: 'My Bookings', icon: Plane, path: '/dashboard' },
-                            { label: 'Price Alerts', icon: Bell, path: '/alerts' },
+                            { label: 'My Bookings',      icon: Plane,    path: '/dashboard' },
+                            { label: 'Price Alerts',     icon: Bell,     path: '/alerts'    },
                             { label: 'Account Settings', icon: Settings, path: '/dashboard' },
-                            ...(user?.role === 'ADMIN' ? [{ label: 'Admin Panel', icon: Settings, path: '/admin' }] : []),
+                            ...(user?.role === 'ADMIN'
+                              ? [{ label: 'Admin Panel', icon: Settings, path: '/admin' }]
+                              : []),
                           ].map(item => (
                             <button
                               key={item.label}
@@ -157,7 +167,7 @@ const Navbar = () => {
                   </button>
                   <button
                     onClick={() => navigate('/register')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors shadow-sm"
                   >
                     Sign Up
                   </button>
@@ -167,14 +177,14 @@ const Navbar = () => {
               {/* Mobile Hamburger */}
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+                className="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Mobile Menu */}
+          {/* ── Mobile Menu ── */}
           {menuOpen && (
             <div className="md:hidden border-t border-gray-100 py-3 space-y-1">
               {navLinks.map(link => (
@@ -187,27 +197,38 @@ const Navbar = () => {
                   <span>{link.label}</span>
                 </button>
               ))}
+
+              {/* Support line in mobile menu */}
+              <a
+                href="tel:+2348000000000"
+                className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                <span>+234 800 000 0000</span>
+              </a>
+
               {!isAuthenticated && (
                 <div className="flex space-x-2 pt-2 border-t border-gray-100">
                   <button
                     onClick={() => { navigate('/login'); setMenuOpen(false); }}
-                    className="flex-1 text-center py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50"
+                    className="flex-1 text-center py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
                   >
                     Login
                   </button>
                   <button
                     onClick={() => { navigate('/register'); setMenuOpen(false); }}
-                    className="flex-1 text-center py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700"
+                    className="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors"
                   >
                     Sign Up
                   </button>
                 </div>
               )}
+
               {isAuthenticated && (
                 <div className="pt-2 border-t border-gray-100">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg"
+                    className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Logout</span>
