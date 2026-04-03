@@ -10,7 +10,7 @@ import {
 import {
   Plane, Users, CreditCard, TrendingUp, Bell, BellRing,
   Shield, ShieldCheck, Search, RefreshCw, Clock, X,
-  ArrowUpRight, ArrowDownRight, Calendar, MapPin
+  ArrowUpRight, ArrowDownRight, Calendar, MapPin, Trophy, DollarSign, BarChart2
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -88,7 +88,7 @@ const AdminPage = () => {
                 {data.type === 'new_booking' ? <Plane className="w-4 h-4 text-blue-600" /> : <CreditCard className="w-4 h-4 text-green-600" />}
               </div>
               <div className="flex-1">
-                <p className="font-bold text-gray-800 text-sm">{data.type === 'new_booking' ? '✈️ New Booking!' : '💳 Payment Received!'}</p>
+                <p className="font-bold text-gray-800 text-sm">{data.type === 'new_booking' ? 'New Booking' : 'Payment Received'}</p>
                 <p className="text-gray-600 text-xs mt-0.5">{data.message}</p>
                 {data.booking && <p className={`text-xs font-bold mt-1 ${data.type === 'new_booking' ? 'text-blue-600' : 'text-green-600'}`}>{data.booking.reference} · {formatPrice(data.booking.amount)}</p>}
               </div>
@@ -184,7 +184,7 @@ const AdminPage = () => {
 
       {/* Admin Top Bar */}
       <div className="bg-gray-900 text-white py-3 px-6 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Shield className="w-4 h-4 text-white" />
@@ -224,7 +224,7 @@ const AdminPage = () => {
                             {notif.type === 'new_booking' ? <Plane className="w-3.5 h-3.5 text-blue-600" /> : <CreditCard className="w-3.5 h-3.5 text-green-600" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800">{notif.type === 'new_booking' ? '✈️ New Booking' : '💳 Payment Received'}</p>
+                            <p className="text-sm font-semibold text-gray-800">{notif.type === 'new_booking' ? 'New Booking' : 'Payment Received'}</p>
                             <p className="text-xs text-gray-500 mt-0.5 truncate">{notif.message}</p>
                             {notif.booking && (
                               <div className="flex items-center justify-between mt-1">
@@ -255,7 +255,7 @@ const AdminPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
 
         {/* Stats Cards */}
         {stats && (
@@ -287,15 +287,16 @@ const AdminPage = () => {
         {/* Tabs */}
         <div className="flex space-x-1 mb-6 bg-white rounded-xl p-1 shadow-sm border border-gray-100 overflow-x-auto">
           {[
-            { id: 'overview', label: '📊 Overview' },
-            { id: 'analytics', label: '📈 Analytics' },
-            { id: 'bookings', label: `✈️ Bookings (${bookings.length})` },
-            { id: 'users', label: `👥 Users (${users.length})` },
-            { id: 'notifications', label: `🔔 Alerts${unreadCount > 0 ? ` (${unreadCount})` : ''}` },
+            { id: 'overview', label: 'Overview', icon: <BarChart2 className="w-3.5 h-3.5" /> },
+            { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="w-3.5 h-3.5" /> },
+            { id: 'bookings', label: `Bookings (${bookings.length})`, icon: <Plane className="w-3.5 h-3.5" /> },
+            { id: 'users', label: `Users (${users.length})`, icon: <Users className="w-3.5 h-3.5" /> },
+            { id: 'notifications', label: `Alerts${unreadCount > 0 ? ` (${unreadCount})` : ''}`, icon: <Bell className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex-shrink-0 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
-              {tab.label}
+              className={`flex-shrink-0 flex items-center space-x-1.5 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+              {tab.icon}
+              <span>{tab.label}</span>
             </button>
           ))}
         </div>
@@ -363,7 +364,7 @@ const AdminPage = () => {
                         <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                           <span className="text-blue-600 text-xs font-bold">{i + 1}</span>
                         </div>
-                        <span className="font-medium text-gray-800 text-sm">{route.origin} → {route.destination}</span>
+                        <span className="font-medium text-gray-800 text-sm">{route.origin} to {route.destination}</span>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-gray-800 text-sm">{route._count.id} flights</p>
@@ -419,7 +420,7 @@ const AdminPage = () => {
                         <Plane className="w-4 h-4 text-blue-500" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800 text-sm">{booking.origin} → {booking.destination}</p>
+                        <p className="font-medium text-gray-800 text-sm">{booking.origin} to {booking.destination}</p>
                         <p className="text-xs text-gray-400">{booking.user?.firstName} {booking.user?.lastName} · <span className="font-mono">{booking.bookingReference}</span></p>
                       </div>
                     </div>
@@ -443,13 +444,14 @@ const AdminPage = () => {
             {/* Chart Toggle */}
             <div className="flex items-center space-x-2 bg-white rounded-xl p-1 shadow-sm border border-gray-100 w-fit">
               {[
-                { id: 'revenue', label: '💰 Revenue' },
-                { id: 'bookings', label: '✈️ Bookings' },
-                { id: 'users', label: '👥 User Growth' },
+                { id: 'revenue', label: 'Revenue', icon: <DollarSign className="w-3.5 h-3.5" /> },
+                { id: 'bookings', label: 'Bookings', icon: <Plane className="w-3.5 h-3.5" /> },
+                { id: 'users', label: 'User Growth', icon: <Users className="w-3.5 h-3.5" /> },
               ].map(c => (
                 <button key={c.id} onClick={() => setChartType(c.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${chartType === c.id ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}>
-                  {c.label}
+                  className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${chartType === c.id ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-700'}`}>
+                  {c.icon}
+                  <span>{c.label}</span>
                 </button>
               ))}
             </div>
@@ -522,7 +524,6 @@ const AdminPage = () => {
             {/* Revenue + Bookings Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-              {/* Revenue vs Bookings Combined */}
               <div className="bg-white rounded-xl shadow-sm p-6 md:col-span-2">
                 <h3 className="font-bold text-gray-800 mb-1">Revenue vs Bookings</h3>
                 <p className="text-gray-400 text-sm mb-5">Monthly comparison</p>
@@ -541,7 +542,6 @@ const AdminPage = () => {
                 </ResponsiveContainer>
               </div>
 
-              {/* Top Routes Chart */}
               {stats.topRoutes && stats.topRoutes.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h3 className="font-bold text-gray-800 mb-1">Top Routes by Revenue</h3>
@@ -563,7 +563,6 @@ const AdminPage = () => {
                 </div>
               )}
 
-              {/* Cabin Class Pie */}
               {stats.revenueByClass && stats.revenueByClass.length > 0 && (
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h3 className="font-bold text-gray-800 mb-1">Bookings by Cabin Class</h3>
@@ -602,23 +601,23 @@ const AdminPage = () => {
                   label: 'Best Month',
                   value: stats.monthlyStats?.reduce((a, b) => a.revenue > b.revenue ? a : b, { revenue: 0, month: 'N/A' })?.month || 'N/A',
                   sub: formatPrice(Math.max(...(stats.monthlyStats?.map(m => m.revenue) || [0]))),
-                  icon: '🏆', color: 'bg-yellow-50 border-yellow-100'
+                  icon: <Trophy className="w-6 h-6 text-yellow-600" />, color: 'bg-yellow-50 border-yellow-100'
                 },
                 {
                   label: 'Most Booked Route',
-                  value: stats.topRoutes?.[0] ? `${stats.topRoutes[0].origin} → ${stats.topRoutes[0].destination}` : 'N/A',
+                  value: stats.topRoutes?.[0] ? `${stats.topRoutes[0].origin} to ${stats.topRoutes[0].destination}` : 'N/A',
                   sub: `${stats.topRoutes?.[0]?._count?.id || 0} bookings`,
-                  icon: '✈️', color: 'bg-blue-50 border-blue-100'
+                  icon: <Plane className="w-6 h-6 text-blue-600" />, color: 'bg-blue-50 border-blue-100'
                 },
                 {
                   label: 'Avg Booking Value',
                   value: stats.totalBookings > 0 ? formatPrice(stats.totalRevenue / stats.totalBookings) : '₦0',
                   sub: `Across ${stats.totalBookings} bookings`,
-                  icon: '💰', color: 'bg-green-50 border-green-100'
+                  icon: <DollarSign className="w-6 h-6 text-green-600" />, color: 'bg-green-50 border-green-100'
                 }
               ].map((card, i) => (
                 <div key={i} className={`rounded-xl border p-5 ${card.color}`}>
-                  <div className="text-2xl mb-3">{card.icon}</div>
+                  <div className="mb-3">{card.icon}</div>
                   <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{card.label}</p>
                   <p className="font-bold text-gray-800 text-lg leading-tight">{card.value}</p>
                   <p className="text-gray-500 text-xs mt-1">{card.sub}</p>
@@ -657,7 +656,7 @@ const AdminPage = () => {
                         <p className="text-sm font-medium text-gray-800">{booking.user?.firstName} {booking.user?.lastName}</p>
                         <p className="text-xs text-gray-400">{booking.user?.email}</p>
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{booking.origin} → {booking.destination}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-800">{booking.origin} to {booking.destination}</td>
                       <td className="px-4 py-3 text-sm text-gray-500">{formatDate(booking.departureDate)}</td>
                       <td className="px-4 py-3 text-sm font-bold text-gray-800">{formatPrice(booking.totalAmount)}</td>
                       <td className="px-4 py-3">
@@ -777,7 +776,7 @@ const AdminPage = () => {
                         {notif.type === 'new_booking' ? <Plane className="w-5 h-5 text-blue-600" /> : <CreditCard className="w-5 h-5 text-green-600" />}
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-800">{notif.type === 'new_booking' ? '✈️ New Booking' : '💳 Payment Confirmed'}</p>
+                        <p className="font-semibold text-gray-800">{notif.type === 'new_booking' ? 'New Booking' : 'Payment Confirmed'}</p>
                         <p className="text-gray-600 text-sm mt-0.5">{notif.message}</p>
                         {notif.booking && (
                           <div className="mt-2 bg-gray-50 rounded-lg p-3 text-xs grid grid-cols-2 sm:grid-cols-4 gap-2">

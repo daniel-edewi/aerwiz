@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users, Plus, Trash2, FileSearch, ChevronRight } from 'lucide-react';
+import { Plane, Search, Calendar, Users, Plus, Trash2, FileSearch, ChevronRight, Star, Shield, Globe, Mail, TrendingDown, ArrowRight } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
 import axios from 'axios';
 
@@ -19,10 +19,84 @@ const AirplaneLoader = () => (
   </span>
 );
 
+// Trending deals — real popular routes from Lagos with landmark images
+// Prices are approximate economy fares (NGN). Update as needed.
+const TRENDING_DEALS = [
+  {
+    from: 'LOS', to: 'LHR',
+    fromCity: 'Lagos', toCity: 'London',
+    country: 'United Kingdom',
+    price: 780000,
+    departureDate: '2025-07-15',
+    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=600&q=80',
+    landmark: 'Tower Bridge, London',
+    tag: 'Most Popular',
+    tagColor: 'bg-blue-600',
+  },
+  {
+    from: 'LOS', to: 'DXB',
+    fromCity: 'Lagos', toCity: 'Dubai',
+    country: 'UAE',
+    price: 520000,
+    departureDate: '2025-07-20',
+    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80',
+    landmark: 'Burj Khalifa, Dubai',
+    tag: 'Best Value',
+    tagColor: 'bg-green-600',
+  },
+  {
+    from: 'LOS', to: 'JFK',
+    fromCity: 'Lagos', toCity: 'New York',
+    country: 'United States',
+    price: 950000,
+    departureDate: '2025-08-01',
+    image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&q=80',
+    landmark: 'Manhattan Skyline',
+    tag: 'Hot Deal',
+    tagColor: 'bg-red-500',
+  },
+  {
+    from: 'ABV', to: 'DOH',
+    fromCity: 'Abuja', toCity: 'Doha',
+    country: 'Qatar',
+    price: 490000,
+    departureDate: '2025-07-25',
+    image: 'https://images.unsplash.com/photo-1637573048046-29c0aeb60413?w=600&q=80',
+    landmark: 'Doha Skyline',
+    tag: 'Low Fare',
+    tagColor: 'bg-purple-600',
+  },
+  {
+    from: 'LOS', to: 'CDG',
+    fromCity: 'Lagos', toCity: 'Paris',
+    country: 'France',
+    price: 720000,
+    departureDate: '2025-08-10',
+    image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80',
+    landmark: 'Eiffel Tower, Paris',
+    tag: 'Trending',
+    tagColor: 'bg-pink-500',
+  },
+  {
+    from: 'LOS', to: 'NBO',
+    fromCity: 'Lagos', toCity: 'Nairobi',
+    country: 'Kenya',
+    price: 185000,
+    departureDate: '2025-07-18',
+    image: 'https://images.unsplash.com/photo-1611348524140-53c9a25263d6?w=600&q=80',
+    landmark: 'Nairobi National Park',
+    tag: 'Africa Deal',
+    tagColor: 'bg-orange-500',
+  },
+];
+
+const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { searchParams, setSearchParams, setSearchResults, setIsSearching, setMultiCityLeg, addMultiCityLeg, removeMultiCityLeg } = useFlightStore();
   const [loading, setLoading] = useState(false);
+  const [dealLoading, setDealLoading] = useState(null);
   const [bookingRef, setBookingRef] = useState('');
   const [lastName, setLastName] = useState('');
   const [manageLoading, setManageLoading] = useState(false);
@@ -76,6 +150,38 @@ const HomePage = () => {
     }
   };
 
+  // Click trending deal → search flights for that route + date and navigate
+  const handleDealClick = async (deal) => {
+    setDealLoading(deal.to);
+    setIsSearching(true);
+    try {
+      setSearchParams({
+        origin: deal.from,
+        destination: deal.to,
+        departureDate: deal.departureDate,
+        tripType: 'ONE_WAY',
+        adults: 1,
+        cabinClass: 'ECONOMY'
+      });
+      const response = await flightsAPI.search({
+        origin: deal.from,
+        destination: deal.to,
+        departureDate: deal.departureDate,
+        adults: 1,
+        cabinClass: 'ECONOMY'
+      });
+      setSearchResults(response.data.data);
+      navigate('/flights');
+    } catch (error) {
+      // Even if search fails, navigate to flights page with params pre-filled
+      toast('Showing available flights for this route');
+      navigate('/flights');
+    } finally {
+      setDealLoading(null);
+      setIsSearching(false);
+    }
+  };
+
   const handleManageBooking = async (e) => {
     e.preventDefault();
     if (!bookingRef.trim() || !lastName.trim()) return toast.error('Please enter your booking reference and last name');
@@ -99,7 +205,6 @@ const HomePage = () => {
   };
 
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-  const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
 
   const STATUS_COLORS = {
     PENDING: 'bg-yellow-100 text-yellow-700',
@@ -130,7 +235,7 @@ const HomePage = () => {
         </div>
 
         {/* Search Form */}
-        <div className="max-w-4xl mx-auto px-4 -mt-24 relative z-10 pb-8">
+        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 -mt-24 relative z-10 pb-8">
           <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 border border-gray-100">
             <div className="flex space-x-1 mb-5 bg-gray-100 rounded-xl p-1">
               {['ONE_WAY', 'ROUND_TRIP', 'MULTI_CITY'].map((type) => (
@@ -255,15 +360,15 @@ const HomePage = () => {
       </div>
 
       {/* Features Strip */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[
-            { icon: '🎀', title: 'Best Prices Guaranteed', desc: 'We search hundreds of airlines to find you the lowest fares available.' },
-            { icon: '🛡️', title: 'Secure Payments', desc: 'Pay safely in Naira with Paystack. Your data is always protected.' },
-            { icon: '🌍', title: 'Worldwide Coverage', desc: 'Fly to over 500 destinations across Africa, Europe, Asia and beyond.' },
+            { icon: <Star className="w-7 h-7 text-blue-600" />, title: 'Best Prices Guaranteed', desc: 'We search hundreds of airlines to find you the lowest fares available.' },
+            { icon: <Shield className="w-7 h-7 text-blue-600" />, title: 'Secure Payments', desc: 'Pay safely in Naira with Paystack. Your data is always protected.' },
+            { icon: <Globe className="w-7 h-7 text-blue-600" />, title: 'Worldwide Coverage', desc: 'Fly to over 500 destinations across Africa, Europe, Asia and beyond.' },
           ].map(f => (
             <div key={f.title} className="flex items-start space-x-4 p-5 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-3xl flex-shrink-0">{f.icon}</div>
+              <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">{f.icon}</div>
               <div>
                 <h3 className="font-bold text-gray-800 mb-1">{f.title}</h3>
                 <p className="text-gray-500 text-sm">{f.desc}</p>
@@ -273,21 +378,104 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* ===== TRENDING FLIGHT DEALS ===== */}
+      <div className="bg-gray-50 py-14 px-4">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <div className="flex items-center space-x-2 mb-1">
+                <TrendingDown className="w-5 h-5 text-blue-600" />
+                <span className="text-blue-600 text-sm font-bold uppercase tracking-wide">Trending Now</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Flight Deals You'll Love</h2>
+              <p className="text-gray-500 mt-1">Real fares on popular routes from Nigeria — click to see live prices</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
+            {TRENDING_DEALS.map((deal) => (
+              <div
+                key={deal.to}
+                onClick={() => handleDealClick(deal)}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+              >
+                {/* Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={deal.image}
+                    alt={deal.toCity}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.src = `https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80`;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+
+                  {/* Tag */}
+                  <div className={`absolute top-3 left-3 ${deal.tagColor} text-white text-xs font-bold px-3 py-1 rounded-full`}>
+                    {deal.tag}
+                  </div>
+
+                  {/* Destination name overlay */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <p className="text-white font-bold text-lg leading-tight">{deal.toCity}</p>
+                    <p className="text-white/80 text-xs">{deal.landmark}</p>
+                  </div>
+                </div>
+
+                {/* Card body */}
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2 text-gray-600 text-sm">
+                      <span className="font-semibold text-gray-800">{deal.fromCity}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="font-semibold text-gray-800">{deal.toCity}</span>
+                    </div>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{deal.from} – {deal.to}</span>
+                  </div>
+
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">From</p>
+                      <p className="text-xl font-bold text-blue-600">{formatPrice(deal.price)}</p>
+                      <p className="text-xs text-gray-400">Economy · One Way</p>
+                    </div>
+                    <button
+                      disabled={dealLoading === deal.to}
+                      className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-70"
+                    >
+                      {dealLoading === deal.to ? (
+                        <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      ) : (
+                        <>
+                          <span>Book Now</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Popular Routes */}
-      <div className="bg-gray-50 py-12 px-4">
-        <div className="max-w-6xl mx-auto">
+      <div className="bg-white py-12 px-4">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Popular Routes</h2>
           <p className="text-gray-500 mb-6">Most searched flights from Nigeria</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { from: 'LOS', to: 'LHR', fromCity: 'Lagos', toCity: 'London', flag: '🇬🇧' },
-              { from: 'LOS', to: 'DXB', fromCity: 'Lagos', toCity: 'Dubai', flag: '🇦🇪' },
-              { from: 'LOS', to: 'JFK', fromCity: 'Lagos', toCity: 'New York', flag: '🇺🇸' },
-              { from: 'ABV', to: 'DOH', fromCity: 'Abuja', toCity: 'Doha', flag: '🇶🇦' },
-              { from: 'LOS', to: 'CDG', fromCity: 'Lagos', toCity: 'Paris', flag: '🇫🇷' },
-              { from: 'LOS', to: 'NBO', fromCity: 'Lagos', toCity: 'Nairobi', flag: '🇰🇪' },
-              { from: 'ABV', to: 'DXB', fromCity: 'Abuja', toCity: 'Dubai', flag: '🇦🇪' },
-              { from: 'LOS', to: 'ADD', fromCity: 'Lagos', toCity: 'Addis Ababa', flag: '🇪🇹' },
+              { from: 'LOS', to: 'LHR', fromCity: 'Lagos', toCity: 'London' },
+              { from: 'LOS', to: 'DXB', fromCity: 'Lagos', toCity: 'Dubai' },
+              { from: 'LOS', to: 'JFK', fromCity: 'Lagos', toCity: 'New York' },
+              { from: 'ABV', to: 'DOH', fromCity: 'Abuja', toCity: 'Doha' },
+              { from: 'LOS', to: 'CDG', fromCity: 'Lagos', toCity: 'Paris' },
+              { from: 'LOS', to: 'NBO', fromCity: 'Lagos', toCity: 'Nairobi' },
+              { from: 'ABV', to: 'DXB', fromCity: 'Abuja', toCity: 'Dubai' },
+              { from: 'LOS', to: 'ADD', fromCity: 'Lagos', toCity: 'Addis Ababa' },
             ].map((route, index) => (
               <div key={index}
                 onClick={() => {
@@ -295,9 +483,11 @@ const HomePage = () => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
-                <div className="text-2xl mb-2">{route.flag}</div>
-                <p className="font-bold text-gray-800 text-sm group-hover:text-blue-600">{route.fromCity} → {route.toCity}</p>
-                <p className="text-xs text-gray-400 mt-1">{route.from} → {route.to}</p>
+                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center mb-2">
+                  <Plane className="w-4 h-4 text-blue-600" />
+                </div>
+                <p className="font-bold text-gray-800 text-sm group-hover:text-blue-600">{route.fromCity} to {route.toCity}</p>
+                <p className="text-xs text-gray-400 mt-1">{route.from} – {route.to}</p>
                 <div className="flex items-center text-blue-600 text-xs mt-2 font-medium">
                   <span>Search</span>
                   <ChevronRight className="w-3 h-3 ml-1" />
@@ -310,7 +500,7 @@ const HomePage = () => {
 
       {/* Manage My Booking */}
       <div id="manage-booking-section" className="bg-blue-700 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6">
           <div className="flex items-center space-x-3 mb-6">
             <FileSearch className="w-6 h-6 text-white" />
             <div>
@@ -351,7 +541,7 @@ const HomePage = () => {
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                <div><p className="text-xs text-gray-400">Route</p><p className="font-bold text-gray-800">{foundBooking.origin} → {foundBooking.destination}</p></div>
+                <div><p className="text-xs text-gray-400">Route</p><p className="font-bold text-gray-800">{foundBooking.origin} to {foundBooking.destination}</p></div>
                 <div><p className="text-xs text-gray-400">Departure</p><p className="font-medium text-gray-700 text-sm">{formatDate(foundBooking.departureDate)}</p></div>
                 <div><p className="text-xs text-gray-400">Flight</p><p className="font-medium text-gray-700 text-sm">{foundBooking.flightNumber}</p></div>
                 <div><p className="text-xs text-gray-400">Total</p><p className="font-bold text-blue-600">{formatPrice(foundBooking.totalAmount)}</p></div>
@@ -373,7 +563,7 @@ const HomePage = () => {
 
       {/* Trust Partners */}
       <div className="bg-white py-10 px-4 border-y border-gray-100">
-        <div className="max-w-5xl mx-auto">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
           <p className="text-center text-gray-400 text-sm font-medium mb-6 uppercase tracking-wide">Trusted Partners</p>
           <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
             {[
@@ -394,12 +584,14 @@ const HomePage = () => {
       {/* Newsletter */}
       <div className="bg-gray-50 py-12 px-4">
         <div className="max-w-xl mx-auto text-center">
-          <div className="text-4xl mb-4">✉️</div>
+          <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-7 h-7 text-blue-600" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Get the latest travel deals</h2>
           <p className="text-gray-500 mb-6">Subscribe to our newsletter and never miss a great deal</p>
           {subscribed ? (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-medium">
-              🎉 Thank you for subscribing! You'll receive the best deals in your inbox.
+              Thank you for subscribing! You'll receive the best deals in your inbox.
             </div>
           ) : (
             <div className="flex space-x-2">

@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
-import { Plane, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Plane, Mail, Lock, Eye, EyeOff, ArrowRight, MapPin, DollarSign, Flag, Shield } from 'lucide-react';
 
 const AirplaneLoader = () => (
   <span className="inline-flex items-center space-x-2">
@@ -65,13 +65,13 @@ const LoginPage = () => {
             </p>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: '✈️', label: '500+ Destinations' },
-                { icon: '💰', label: 'Best Price Guarantee' },
-                { icon: '🇳🇬', label: 'Pay in Naira' },
-                { icon: '🛡️', label: 'Secure Booking' },
+                { icon: <Plane className="w-4 h-4 text-white" />, label: '500+ Destinations' },
+                { icon: <DollarSign className="w-4 h-4 text-white" />, label: 'Best Price Guarantee' },
+                { icon: <Flag className="w-4 h-4 text-white" />, label: 'Pay in Naira' },
+                { icon: <Shield className="w-4 h-4 text-white" />, label: 'Secure Booking' },
               ].map(f => (
                 <div key={f.label} className="flex items-center space-x-2 bg-white/10 rounded-xl px-3 py-2">
-                  <span>{f.icon}</span>
+                  {f.icon}
                   <span className="text-white text-sm font-medium">{f.label}</span>
                 </div>
               ))}
@@ -171,7 +171,7 @@ const LoginPage = () => {
           </p>
 
           <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center space-x-1">
-            <span>🔒</span>
+            <Lock className="w-3 h-3" />
             <span>Your data is protected with SSL encryption</span>
           </p>
         </div>

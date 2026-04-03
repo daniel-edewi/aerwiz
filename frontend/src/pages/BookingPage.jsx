@@ -5,7 +5,7 @@ import useFlightStore from '../store/flightStore';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { Plane, Tag, Plus, Trash2, Clock, ChevronDown, ChevronUp, Check, AlertCircle, Luggage, Info } from 'lucide-react';
+import { Plane, Tag, Plus, Trash2, Clock, ChevronDown, ChevronUp, Check, AlertCircle, Luggage, Info, Lock, Gift, Award } from 'lucide-react';
 
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -222,7 +222,7 @@ const BookingPage = () => {
 
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
               <Plane className="text-white w-4 h-4" />
@@ -231,14 +231,14 @@ const BookingPage = () => {
           </div>
           <StepIndicator current={1} />
           <button onClick={() => navigate('/flights')} className="text-xs text-gray-500 hover:text-blue-600 font-medium hidden sm:block">
-            ← Back to results
+            Back to results
           </button>
         </div>
       </header>
 
       {/* Route Banner */}
       <div className="bg-blue-700 text-white py-3 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <img src={`https://pics.avs.io/40/40/${airlineCode}.png`} alt={airlineCode}
               className="w-8 h-8 rounded-lg object-contain bg-white/20 p-1"
@@ -246,7 +246,7 @@ const BookingPage = () => {
             <div>
               <div className="flex items-center space-x-2 font-bold text-sm sm:text-base">
                 <span>{segment.departure.iataCode}</span>
-                <span>→</span>
+                <span>to</span>
                 <span>{lastSegment.arrival.iataCode}</span>
                 {isRoundTrip && <span className="text-xs bg-orange-400 px-2 py-0.5 rounded-full">Round Trip</span>}
               </div>
@@ -262,7 +262,7 @@ const BookingPage = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* LEFT - Form */}
@@ -410,12 +410,14 @@ const BookingPage = () => {
               <div className="p-5">
                 <div className="flex items-center justify-between bg-blue-50 rounded-xl p-4">
                   <div className="flex items-center space-x-3">
-                    <div className="text-2xl">💺</div>
+                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Plane className="w-5 h-5 text-blue-600" />
+                    </div>
                     <div>
                       {selectedSeat ? (
                         <>
                           <p className="font-bold text-gray-800">Seat {selectedSeat.id} selected</p>
-                          <p className="text-xs text-gray-500">{selectedSeat.extraLegroom ? '✅ Extra Legroom' : 'Standard seat'} · {cabin}</p>
+                          <p className="text-xs text-gray-500">{selectedSeat.extraLegroom ? 'Extra Legroom' : 'Standard seat'} · {cabin}</p>
                         </>
                       ) : (
                         <>
@@ -427,7 +429,7 @@ const BookingPage = () => {
                   </div>
                   <button type="button" onClick={() => navigate('/seats')}
                     className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors flex-shrink-0">
-                    {selectedSeat ? 'Change Seat' : 'Select Seat →'}
+                    {selectedSeat ? 'Change Seat' : 'Select Seat'}
                   </button>
                 </div>
               </div>
@@ -442,9 +444,12 @@ const BookingPage = () => {
               <div className="p-5">
                 {promo ? (
                   <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
-                    <div>
-                      <p className="text-sm font-bold text-green-700">🎉 {promo.code} applied!</p>
-                      <p className="text-xs text-green-600">{promo.description} · You save {formatPrice(promo.discount)}</p>
+                    <div className="flex items-center space-x-2">
+                      <Gift className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-bold text-green-700">{promo.code} applied!</p>
+                        <p className="text-xs text-green-600">{promo.description} · You save {formatPrice(promo.discount)}</p>
+                      </div>
                     </div>
                     <button type="button" onClick={() => { setPromo(null); setPromoCode(''); }}
                       className="text-red-400 hover:text-red-600 text-xs font-semibold ml-3">Remove</button>
@@ -511,7 +516,7 @@ const BookingPage = () => {
             </button>
 
             <p className="text-center text-xs text-gray-400 flex items-center justify-center space-x-1">
-              <span>🔒</span>
+              <Lock className="w-3 h-3" />
               <span>Your payment is secured with SSL encryption via Paystack</span>
             </p>
           </div>
@@ -573,9 +578,9 @@ const BookingPage = () => {
                     <p className="text-xs font-bold text-orange-700 mb-2">Transit Information</p>
                     {segments.map((seg, i) => (
                       <div key={i} className="text-xs text-gray-600 mb-1">
-                        <p className="font-medium">{seg.departure.iataCode} → {seg.arrival.iataCode} · {formatDuration(seg.duration)}</p>
+                        <p className="font-medium">{seg.departure.iataCode} to {seg.arrival.iataCode} · {formatDuration(seg.duration)}</p>
                         {i < segments.length - 1 && (
-                          <p className="text-orange-500">↳ Layover at {seg.arrival.iataCode}</p>
+                          <p className="text-orange-500">Layover at {seg.arrival.iataCode}</p>
                         )}
                       </div>
                     ))}
@@ -591,16 +596,16 @@ const BookingPage = () => {
                   <div className="space-y-1 text-xs">
                     <div className="flex items-center space-x-2">
                       {includedCabinBags ? (
-                        <><span className="text-green-500">✓</span><span className="text-gray-600">Cabin bag included</span></>
+                        <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">Cabin bag included</span></>
                       ) : (
-                        <><span className="text-gray-400">–</span><span className="text-gray-400">Cabin bag: check with airline</span></>
+                        <><span className="text-gray-400">-</span><span className="text-gray-400">Cabin bag: check with airline</span></>
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
                       {includedBags ? (
-                        <><span className="text-green-500">✓</span><span className="text-gray-600">{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''} included{includedBags.weight ? ` (${includedBags.weight}${includedBags.weightUnit})` : ''}</span></>
+                        <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''} included{includedBags.weight ? ` (${includedBags.weight}${includedBags.weightUnit})` : ''}</span></>
                       ) : (
-                        <><span className="text-orange-400">✕</span><span className="text-orange-600">No checked bag included</span></>
+                        <><span className="text-orange-400 font-bold">x</span><span className="text-orange-600">No checked bag included</span></>
                       )}
                     </div>
                   </div>
@@ -618,7 +623,10 @@ const BookingPage = () => {
                 {/* Miles Program */}
                 {milesProgram && (
                   <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
-                    <p className="text-xs font-bold text-purple-700">✈️ Earn Miles</p>
+                    <p className="text-xs font-bold text-purple-700 flex items-center space-x-1">
+                      <Award className="w-3.5 h-3.5" />
+                      <span>Earn Miles</span>
+                    </p>
                     <p className="text-xs text-gray-500 mt-1">
                       Eligible for <a href={milesProgram.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 underline font-medium">{milesProgram.program}</a>
                     </p>
@@ -628,8 +636,11 @@ const BookingPage = () => {
                 {/* Selected Seat */}
                 {selectedSeat && (
                   <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                    <p className="text-xs font-bold text-green-700">💺 Selected Seat</p>
-                    <p className="text-xs text-gray-600 mt-1">Seat <span className="font-bold">{selectedSeat.id}</span> {selectedSeat.extraLegroom ? '· Extra Legroom 🟢' : ''}</p>
+                    <p className="text-xs font-bold text-green-700 flex items-center space-x-1">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Selected Seat</span>
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">Seat <span className="font-bold">{selectedSeat.id}</span> {selectedSeat.extraLegroom ? '· Extra Legroom' : ''}</p>
                   </div>
                 )}
 
@@ -645,7 +656,7 @@ const BookingPage = () => {
                   </div>
                   {promo && (
                     <div className="flex justify-between text-sm text-green-600 font-medium">
-                      <span>🎟️ {promo.code}</span>
+                      <span>{promo.code}</span>
                       <span>-{formatPrice(promo.discount)}</span>
                     </div>
                   )}
@@ -666,7 +677,7 @@ const BookingPage = () => {
                   <div className="border-t pt-3 space-y-2">
                     {segments.map((seg, i) => (
                       <div key={i} className="text-xs bg-gray-50 rounded-lg p-3 space-y-1">
-                        <p className="font-bold text-gray-700">{seg.departure.iataCode} → {seg.arrival.iataCode}</p>
+                        <p className="font-bold text-gray-700">{seg.departure.iataCode} to {seg.arrival.iataCode}</p>
                         <p className="text-gray-500">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode} · {seg.carrierCode}{seg.number}</p>
                         <p className="text-gray-500">Dep: {formatTime(seg.departure.at)}{seg.departure.terminal ? ` · T${seg.departure.terminal}` : ''}</p>
                         <p className="text-gray-500">Arr: {formatTime(seg.arrival.at)}{seg.arrival.terminal ? ` · T${seg.arrival.terminal}` : ''}</p>
