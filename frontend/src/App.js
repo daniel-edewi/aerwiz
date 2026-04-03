@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import BookingPage from './pages/BookingPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
+import AdminLoginPage from './pages/AdminLoginPage';
 import SeatSelectionPage from './pages/SeatSelectionPage';
 import AlertsPage from './pages/AlertsPage';
 import BaggagePage from './pages/BaggagePage';
@@ -28,6 +29,7 @@ function App() {
           <Route path="/book" element={<BookingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/baggage" element={<BaggagePage />} />
           <Route path="/payment/verify" element={<PaymentVerifyPage />} />
