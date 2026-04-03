@@ -31,59 +31,81 @@ const getDurationMinutes = (duration) => {
   return h * 60 + m;
 };
 
+// ─── Flight Leg — fully responsive, no overflow ───────────────────────────
 const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
-  <div className="flex items-center w-full gap-3 sm:gap-6">
-    <div className="flex items-center space-x-3 w-32 sm:w-44 flex-shrink-0">
-      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-        <img
-          src={getAirlineLogo(seg.carrierCode)}
-          alt={seg.carrierCode}
-          className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
-          onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.parentElement.innerHTML = `<span class="text-sm font-black text-blue-700">${seg.carrierCode}</span>`;
-          }}
-        />
-      </div>
-      <div>
-        <p className="text-xs font-bold text-gray-800 leading-tight">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{seg.carrierCode}{seg.number}</p>
-      </div>
-    </div>
+  <div className="w-full min-w-0">
 
-    <div className="flex items-center flex-1 justify-between">
-      <div className="text-left">
-        <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">{formatTime(seg.departure.at)}</p>
-        <p className="text-sm font-bold text-gray-600 mt-0.5">{seg.departure.iataCode}</p>
-        {seg.departure.terminal && <p className="text-xs text-gray-400">Terminal {seg.departure.terminal}</p>}
-      </div>
+    {/* Mobile layout: stacked */}
+    <div className="flex items-center w-full min-w-0 gap-2 sm:gap-4">
 
-      <div className="flex flex-col items-center flex-1 px-3 sm:px-6">
-        <div className="flex items-center space-x-1 text-gray-400 mb-2">
-          <Clock className="w-3 h-3" />
-          <span className="text-xs font-semibold">{formatDuration(duration)}</span>
+      {/* Airline logo + name */}
+      <div className="flex items-center space-x-2 w-24 sm:w-40 flex-shrink-0 min-w-0">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+          <img
+            src={getAirlineLogo(seg.carrierCode)}
+            alt={seg.carrierCode}
+            className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.parentElement.innerHTML = `<span class="text-xs font-black text-blue-700">${seg.carrierCode}</span>`;
+            }}
+          />
         </div>
-        <div className="flex items-center w-full">
-          <div className="h-px flex-1 bg-gray-300"></div>
-          <div className="mx-2 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-            <Plane className="w-3 h-3 text-white" />
-          </div>
-          <div className="h-px flex-1 bg-gray-300"></div>
-        </div>
-        <p className={`text-xs mt-2 font-bold ${stops === 0 ? 'text-green-600' : 'text-orange-500'}`}>
-          {stops === 0 ? 'Nonstop' : `${stops} Stop${stops > 1 ? 's' : ''}`}
-        </p>
-        {stops > 0 && segments && (
-          <p className="text-xs text-gray-400 mt-0.5">
-            via {segments.slice(0, -1).map(s => s.arrival.iataCode).join(', ')}
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-gray-800 leading-tight truncate">
+            {AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode}
           </p>
-        )}
+          <p className="text-xs text-gray-400 mt-0.5 truncate">{seg.carrierCode}{seg.number}</p>
+        </div>
       </div>
 
-      <div className="text-right">
-        <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">{formatTime(lastSeg.arrival.at)}</p>
-        <p className="text-sm font-bold text-gray-600 mt-0.5">{lastSeg.arrival.iataCode}</p>
-        {lastSeg.arrival.terminal && <p className="text-xs text-gray-400">Terminal {lastSeg.arrival.terminal}</p>}
+      {/* Route: time → stops → time */}
+      <div className="flex items-center flex-1 min-w-0 justify-between gap-1">
+
+        {/* Departure */}
+        <div className="text-left flex-shrink-0">
+          <p className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-none">
+            {formatTime(seg.departure.at)}
+          </p>
+          <p className="text-xs font-bold text-gray-600 mt-0.5">{seg.departure.iataCode}</p>
+          {seg.departure.terminal && (
+            <p className="text-xs text-gray-400 hidden sm:block">T{seg.departure.terminal}</p>
+          )}
+        </div>
+
+        {/* Middle — duration + line */}
+        <div className="flex flex-col items-center flex-1 min-w-0 px-1 sm:px-3">
+          <div className="flex items-center space-x-1 text-gray-400 mb-1">
+            <Clock className="w-2.5 h-2.5 flex-shrink-0" />
+            <span className="text-xs font-semibold whitespace-nowrap">{formatDuration(duration)}</span>
+          </div>
+          <div className="flex items-center w-full">
+            <div className="h-px flex-1 bg-gray-300"></div>
+            <div className="mx-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Plane className="w-2.5 h-2.5 text-white" />
+            </div>
+            <div className="h-px flex-1 bg-gray-300"></div>
+          </div>
+          <p className={`text-xs mt-1 font-bold whitespace-nowrap ${stops === 0 ? 'text-green-600' : 'text-orange-500'}`}>
+            {stops === 0 ? 'Nonstop' : `${stops} Stop${stops > 1 ? 's' : ''}`}
+          </p>
+          {stops > 0 && segments && (
+            <p className="text-xs text-gray-400 truncate max-w-full">
+              via {segments.slice(0, -1).map(s => s.arrival.iataCode).join(', ')}
+            </p>
+          )}
+        </div>
+
+        {/* Arrival */}
+        <div className="text-right flex-shrink-0">
+          <p className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-none">
+            {formatTime(lastSeg.arrival.at)}
+          </p>
+          <p className="text-xs font-bold text-gray-600 mt-0.5">{lastSeg.arrival.iataCode}</p>
+          {lastSeg.arrival.terminal && (
+            <p className="text-xs text-gray-400 hidden sm:block">T{lastSeg.arrival.terminal}</p>
+          )}
+        </div>
       </div>
     </div>
   </div>
@@ -160,40 +182,49 @@ const FlightsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
 
       {/* Search Summary Bar */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-        <div className="w-full px-4 sm:px-6 py-3 max-w-screen-2xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 text-sm overflow-x-auto">
-              <span className="font-black text-gray-900 text-base uppercase tracking-wide whitespace-nowrap">{searchParams.origin}</span>
-              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <span className="font-black text-gray-900 text-base uppercase tracking-wide whitespace-nowrap">{searchParams.destination}</span>
+        <div className="w-full px-3 sm:px-6 py-3 max-w-screen-2xl mx-auto">
+          <div className="flex items-center justify-between gap-2">
+            {/* Route summary — truncates gracefully on mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-3 text-sm min-w-0 flex-1">
+              <span className="font-black text-gray-900 text-sm sm:text-base uppercase tracking-wide whitespace-nowrap">
+                {searchParams.origin}
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <span className="font-black text-gray-900 text-sm sm:text-base uppercase tracking-wide whitespace-nowrap">
+                {searchParams.destination}
+              </span>
               {searchParams.tripType === 'ROUND_TRIP' && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">Round Trip</span>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap hidden xs:inline">
+                  Round Trip
+                </span>
               )}
-              <span className="text-gray-300 hidden sm:block">|</span>
+              <span className="text-gray-400 hidden sm:block">·</span>
               <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">{searchParams.departureDate}</span>
-              <span className="text-gray-300 hidden sm:block">|</span>
-              <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">{searchParams.adults} Adult{searchParams.adults > 1 ? 's' : ''}</span>
-              <span className="text-gray-300 hidden sm:block">|</span>
-              <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">{searchParams.cabinClass?.replace('_', ' ')}</span>
+              <span className="text-gray-400 hidden sm:block">·</span>
+              <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">
+                {searchParams.adults} Adult{searchParams.adults > 1 ? 's' : ''}
+              </span>
             </div>
-            <button onClick={() => navigate('/')}
-              className="flex-shrink-0 ml-4 border border-blue-600 text-blue-600 px-4 py-1.5 rounded-lg font-semibold text-xs hover:bg-blue-50 transition-colors">
-              Modify Search
+            <button
+              onClick={() => navigate('/')}
+              className="flex-shrink-0 border border-blue-600 text-blue-600 px-3 py-1.5 rounded-lg font-semibold text-xs hover:bg-blue-50 transition-colors whitespace-nowrap"
+            >
+              Modify
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 py-6 max-w-screen-2xl mx-auto">
-        <div className="flex gap-6">
+      <div className="w-full px-3 sm:px-6 py-4 sm:py-6 max-w-screen-2xl mx-auto">
+        <div className="flex gap-5">
 
-          {/* Sidebar Filters */}
-          <div className="hidden lg:block w-64 flex-shrink-0">
+          {/* Sidebar Filters — desktop only */}
+          <div className="hidden lg:block w-60 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm p-5 sticky top-20 border border-gray-100">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-gray-800 flex items-center space-x-2">
@@ -211,7 +242,10 @@ const FlightsPage = () => {
                 <div className="space-y-2.5">
                   {[['all', 'Any stops'], ['direct', 'Nonstop only'], ['1stop', '1 Stop max']].map(([val, label]) => (
                     <label key={val} className="flex items-center space-x-3 cursor-pointer group">
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${filters.stops === val ? 'border-blue-600 bg-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
+                      <div
+                        onClick={() => setFilters(f => ({ ...f, stops: val }))}
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${filters.stops === val ? 'border-blue-600 bg-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}
+                      >
                         {filters.stops === val && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                       </div>
                       <span className={`text-sm ${filters.stops === val ? 'text-blue-600 font-semibold' : 'text-gray-600'}`}>{label}</span>
@@ -240,15 +274,18 @@ const FlightsPage = () => {
                 <div className="space-y-2.5">
                   {airlines.map(code => (
                     <label key={code} className="flex items-center space-x-3 cursor-pointer group">
-                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${filters.airlines.includes(code) ? 'border-blue-600 bg-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
+                      <div
+                        onClick={() => toggleAirline(code)}
+                        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${filters.airlines.includes(code) ? 'border-blue-600 bg-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}
+                      >
                         {filters.airlines.includes(code) && <Check className="w-3 h-3 text-white" />}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-7 h-7 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
-                          <img src={getAirlineLogo(code)} alt={code} className="w-6 h-6 object-contain"
+                      <div className="flex items-center space-x-2 min-w-0">
+                        <div className="w-6 h-6 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                          <img src={getAirlineLogo(code)} alt={code} className="w-5 h-5 object-contain"
                             onError={(e) => { e.target.style.display = 'none'; }} />
                         </div>
-                        <span className="text-sm text-gray-600">{AIRLINE_NAMES[code] || code}</span>
+                        <span className="text-sm text-gray-600 truncate">{AIRLINE_NAMES[code] || code}</span>
                       </div>
                     </label>
                   ))}
@@ -259,16 +296,19 @@ const FlightsPage = () => {
 
           {/* Flight List */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-lg font-bold text-gray-800">
+
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-bold text-gray-800">
                   {filtered.length} flight{filtered.length !== 1 ? 's' : ''} found
                 </h1>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-xs text-gray-500 mt-0.5 truncate">
                   {searchParams.origin} to {searchParams.destination} · {searchParams.departureDate}
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                {/* Mobile filter button */}
                 <button onClick={() => setShowFilters(!showFilters)}
                   className="lg:hidden flex items-center space-x-1.5 border border-gray-200 bg-white px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:border-blue-400 transition-colors">
                   <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -277,19 +317,19 @@ const FlightsPage = () => {
                     <span className="bg-blue-600 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">{activeFiltersCount}</span>
                   )}
                 </button>
+                {/* Sort */}
                 <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <span className="text-xs text-gray-400 px-2 hidden sm:block">Sort by</span>
                   {['price', 'duration', 'departure'].map(s => (
                     <button key={s} onClick={() => setSortBy(s)}
-                      className={`px-3 py-2 text-xs font-semibold transition-colors ${sortBy === s ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
-                      {s === 'price' ? 'Price' : s === 'duration' ? 'Duration' : 'Departure'}
+                      className={`px-2 sm:px-3 py-2 text-xs font-semibold transition-colors ${sortBy === s ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+                      {s === 'price' ? 'Price' : s === 'duration' ? 'Duration' : 'Time'}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Mobile Filters */}
+            {/* Mobile Filters panel */}
             {showFilters && (
               <div className="lg:hidden bg-white rounded-xl shadow-sm p-4 mb-4 border border-gray-100">
                 <div className="grid grid-cols-2 gap-4">
@@ -312,18 +352,18 @@ const FlightsPage = () => {
                         <label key={code} className="flex items-center space-x-2 cursor-pointer">
                           <input type="checkbox" checked={filters.airlines.includes(code)}
                             onChange={() => toggleAirline(code)} className="accent-blue-600" />
-                          <span className="text-sm text-gray-600">{AIRLINE_NAMES[code] || code}</span>
+                          <span className="text-sm text-gray-600 truncate">{AIRLINE_NAMES[code] || code}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 gap-2">
                   <input type="number" placeholder="Max price (NGN)" value={filters.maxPrice}
                     onChange={(e) => setFilters(f => ({ ...f, maxPrice: e.target.value }))}
-                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none w-44" />
+                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none flex-1 min-w-0" />
                   <button onClick={() => setFilters({ stops: 'all', maxPrice: '', airlines: [] })}
-                    className="flex items-center space-x-1 text-sm text-red-500 font-medium">
+                    className="flex items-center space-x-1 text-sm text-red-500 font-medium flex-shrink-0">
                     <X className="w-4 h-4" /><span>Reset</span>
                   </button>
                 </div>
@@ -354,65 +394,70 @@ const FlightsPage = () => {
 
                 return (
                   <div key={flight.id}
-                    className={`bg-white rounded-xl shadow-sm border transition-all hover:shadow-md ${isLowest ? 'border-blue-300 ring-1 ring-blue-100' : isFastest ? 'border-green-300 ring-1 ring-green-100' : 'border-gray-100'}`}>
+                    className={`bg-white rounded-xl shadow-sm border transition-all hover:shadow-md overflow-hidden ${isLowest ? 'border-blue-300 ring-1 ring-blue-100' : isFastest ? 'border-green-300 ring-1 ring-green-100' : 'border-gray-100'}`}>
 
                     {(isLowest || isFastest) && (
-                      <div className="px-5 pt-3 flex space-x-2">
+                      <div className="px-4 pt-3 flex space-x-2">
                         {isLowest && <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">Best Price</span>}
                         {isFastest && <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">Fastest</span>}
                       </div>
                     )}
 
-                    <div className="p-5 sm:p-6">
+                    <div className="p-4 sm:p-5">
+
+                      {/* Outbound leg */}
                       <FlightLeg seg={seg} lastSeg={lastSeg} stops={stops} duration={duration} segments={segments} />
 
+                      {/* Return leg */}
                       {isRoundTrip && (
                         <>
-                          <div className="border-t border-dashed border-gray-200 my-4 flex items-center space-x-2">
-                            <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full border border-blue-100">Return Flight</span>
+                          <div className="border-t border-dashed border-gray-200 my-3 flex items-center">
+                            <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Return</span>
                           </div>
                           <FlightLeg seg={retSeg} lastSeg={retLastSeg} stops={retStops} duration={retDuration} segments={retSegments} />
                         </>
                       )}
 
-                      <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-100">
-                        <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-3 py-1 rounded-full font-medium">
+                      {/* Baggage tags */}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
+                        <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full font-medium">
                           {cabin?.replace('_', ' ')}
                         </span>
                         {includedCabinBags && (
-                          <span className="flex items-center space-x-1 text-xs text-green-700 bg-green-50 border border-green-100 px-3 py-1 rounded-full font-medium">
-                            <Check className="w-3 h-3" />
-                            <span>Cabin bag included</span>
+                          <span className="flex items-center space-x-1 text-xs text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-medium">
+                            <Check className="w-3 h-3 flex-shrink-0" />
+                            <span>Cabin bag</span>
                           </span>
                         )}
                         {includedBags ? (
-                          <span className="flex items-center space-x-1 text-xs text-green-700 bg-green-50 border border-green-100 px-3 py-1 rounded-full font-medium">
-                            <Check className="w-3 h-3" />
+                          <span className="flex items-center space-x-1 text-xs text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-medium">
+                            <Check className="w-3 h-3 flex-shrink-0" />
                             <span>{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''}</span>
                           </span>
                         ) : (
-                          <span className="text-xs text-orange-600 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full font-medium">
+                          <span className="text-xs text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full font-medium">
                             No checked bag
                           </span>
                         )}
                         <button onClick={() => setExpandedFlight(isExpanded ? null : flight.id)}
                           className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 font-semibold ml-auto">
-                          <span>{isExpanded ? 'Less details' : 'Flight details'}</span>
+                          <span>{isExpanded ? 'Less' : 'Details'}</span>
                           {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </button>
                       </div>
 
+                      {/* Expanded details */}
                       {isExpanded && (
                         <div className="mt-4 pt-4 border-t border-gray-100">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Flight Segments</p>
                               {segments.map((s, i) => (
-                                <div key={i} className="text-xs text-gray-500 space-y-1 mb-3 bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                <div key={i} className="text-xs text-gray-500 space-y-1 mb-3 bg-gray-50 rounded-xl p-3 border border-gray-100">
                                   <p className="font-bold text-gray-800 text-sm">{s.departure.iataCode} → {s.arrival.iataCode}</p>
-                                  <p className="text-gray-500">{AIRLINE_NAMES[s.carrierCode] || s.carrierCode} · Flight {s.carrierCode}{s.number}</p>
-                                  <p>Departure: {formatTime(s.departure.at)}{s.departure.terminal ? ` · Terminal ${s.departure.terminal}` : ''}</p>
-                                  <p>Arrival: {formatTime(s.arrival.at)}{s.arrival.terminal ? ` · Terminal ${s.arrival.terminal}` : ''}</p>
+                                  <p>{AIRLINE_NAMES[s.carrierCode] || s.carrierCode} · {s.carrierCode}{s.number}</p>
+                                  <p>Dep: {formatTime(s.departure.at)}{s.departure.terminal ? ` · T${s.departure.terminal}` : ''}</p>
+                                  <p>Arr: {formatTime(s.arrival.at)}{s.arrival.terminal ? ` · T${s.arrival.terminal}` : ''}</p>
                                   <p>Duration: {formatDuration(s.duration)}</p>
                                   {s.aircraft?.code && <p>Aircraft: {s.aircraft.code}</p>}
                                 </div>
@@ -420,7 +465,7 @@ const FlightsPage = () => {
                             </div>
                             <div>
                               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Fare Breakdown</p>
-                              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 text-xs text-gray-500 space-y-3">
+                              <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs text-gray-500 space-y-2.5">
                                 <div className="flex justify-between">
                                   <span>Cabin Class</span>
                                   <span className="font-semibold text-gray-700">{cabin?.replace('_', ' ')}</span>
@@ -437,7 +482,7 @@ const FlightsPage = () => {
                                     {includedBags ? `${includedBags.quantity}x ${includedBags.weight ? `${includedBags.weight}${includedBags.weightUnit}` : 'included'}` : 'Not included'}
                                   </span>
                                 </div>
-                                <div className="border-t border-gray-200 pt-3 space-y-2">
+                                <div className="border-t border-gray-200 pt-2 space-y-2">
                                   <div className="flex justify-between">
                                     <span>Base Fare</span>
                                     <span className="font-semibold text-gray-700">{formatPrice(flight.price.base)}</span>
@@ -457,29 +502,34 @@ const FlightsPage = () => {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between mt-5 pt-4 border-t border-gray-100">
-                        <div>
-                          <p className="text-3xl sm:text-4xl font-black text-blue-600 tracking-tight">
+                      {/* Price + CTA — responsive, no overflow */}
+                      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xl sm:text-2xl font-black text-blue-600 tracking-tight leading-none">
                             {formatPrice(flight.price.grandTotal)}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">per person · {isRoundTrip ? 'round trip' : 'one way'}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            per person · {isRoundTrip ? 'round trip' : 'one way'}
+                          </p>
                           <p className="text-xs text-gray-400">{formatDate(seg.departure.at)}</p>
                         </div>
-                        <div className="flex flex-col items-end space-y-2">
+                        <div className="flex flex-col items-end space-y-1.5 flex-shrink-0">
                           <button
                             onClick={() => { setSelectedFlight(flight); navigate('/book'); }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold text-sm transition-colors shadow-sm hover:shadow-md">
-                            Select Flight
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-7 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm hover:shadow-md whitespace-nowrap"
+                          >
+                            Select
                           </button>
                           {flight.numberOfBookableSeats && (
-                            <p className={`text-xs font-semibold ${flight.numberOfBookableSeats <= 4 ? 'text-red-500' : 'text-orange-500'}`}>
+                            <p className={`text-xs font-semibold whitespace-nowrap ${flight.numberOfBookableSeats <= 4 ? 'text-red-500' : 'text-orange-500'}`}>
                               {flight.numberOfBookableSeats <= 4
-                                ? `Only ${flight.numberOfBookableSeats} seat${flight.numberOfBookableSeats > 1 ? 's' : ''} left`
-                                : `${flight.numberOfBookableSeats} seats available`}
+                                ? `Only ${flight.numberOfBookableSeats} left`
+                                : `${flight.numberOfBookableSeats} seats`}
                             </p>
                           )}
                         </div>
                       </div>
+
                     </div>
                   </div>
                 );
