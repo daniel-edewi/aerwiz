@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   Plane, Search, Calendar, Users, Plus, Trash2,
   FileSearch, ChevronRight, Mail, TrendingDown, ArrowRight,
-  Lock, Clock, Tag, CheckCircle
+  Tag, X, Lock, CheckCircle
 } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
 import axios from 'axios';
@@ -108,27 +108,27 @@ const STATUS_COLORS = {
   FAILED: 'bg-red-100 text-red-700',
 };
 
-// Official brand logos via Wikimedia CDN
+// Official coloured logos — same CDN used by Travelbeta
 const PARTNERS = [
   {
-    name: 'Amadeus',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Amadeus_IT_Group_logo.svg/320px-Amadeus_IT_Group_logo.svg.png',
+    name: 'IATA',
+    logo: 'https://res.cloudinary.com/diapyzzws/image/upload/v1682565809/Website%20Images/iataLogoColoured.svg',
   },
   {
     name: 'Paystack',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Paystack_Logo.png/320px-Paystack_Logo.png',
+    logo: 'https://res.cloudinary.com/diapyzzws/image/upload/v1682565809/Website%20Images/paystackLogoColoured.svg',
   },
   {
-    name: 'IATA',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/IATA_logo.svg/320px-IATA_logo.svg.png',
+    name: 'Amadeus',
+    logo: 'https://res.cloudinary.com/diapyzzws/image/upload/v1682565809/Website%20Images/amadeusLogoColoured.svg',
   },
   {
-    name: 'Visa',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png',
+    name: 'Flutterwave',
+    logo: 'https://res.cloudinary.com/diapyzzws/image/upload/v1682565809/Website%20Images/flutterwaveLogoColoured.svg',
   },
   {
-    name: 'Mastercard',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/320px-Mastercard-logo.svg.png',
+    name: 'Interswitch',
+    logo: 'https://res.cloudinary.com/diapyzzws/image/upload/v1682565809/Website%20Images/InterswitchLogoColoured.svg',
   },
 ];
 
@@ -519,165 +519,96 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          MANAGE MY BOOKING — Professional redesign
-      ══════════════════════════════════════ */}
-      <div id="manage-booking-section" className="bg-white py-16 border-t border-gray-100">
+      {/* ══ MANAGE BOOKING — single line ══ */}
+      <div id="manage-booking-section" className="bg-gray-50 border-t border-b border-gray-200 py-4">
         <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6">
+          <form onSubmit={handleManageBooking} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <span className="text-sm font-semibold text-gray-600 whitespace-nowrap flex-shrink-0">Manage Booking</span>
+            <div className="hidden sm:block w-px h-6 bg-gray-300 flex-shrink-0 mx-1"></div>
+            <input
+              type="text"
+              value={bookingRef}
+              onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
+              placeholder="Booking reference (e.g. AWZ123456)"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono tracking-wider bg-white"
+            />
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last name (e.g. Johnson)"
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+            />
+            <button
+              type="submit"
+              disabled={manageLoading}
+              className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors disabled:opacity-70 flex items-center space-x-1.5"
+            >
+              {manageLoading ? <AirplaneLoader /> : <><Search className="w-4 h-4" /><span>Find</span></>}
+            </button>
+          </form>
 
-          {/* Header */}
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-50 rounded-2xl mb-4 shadow-sm">
-              <FileSearch className="w-7 h-7 text-blue-600" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Manage Your Booking</h2>
-            <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
-              Retrieve your booking details, check travel status, and manage your trip anytime — no login required.
-            </p>
-          </div>
-
-          {/* Form card */}
-          <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
-            <form onSubmit={handleManageBooking} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                    Booking Reference
-                  </label>
-                  <div className="relative">
-                    <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={bookingRef}
-                      onChange={(e) => setBookingRef(e.target.value.toUpperCase())}
-                      placeholder="e.g. AWZ123456"
-                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono tracking-widest bg-gray-50 transition-colors"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1.5">Found in your confirmation email</p>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                    Lead Passenger Last Name
-                  </label>
-                  <div className="relative">
-                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      placeholder="e.g. Johnson"
-                      className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-gray-50 transition-colors"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1.5">As it appears on your passport</p>
-                </div>
+          {/* Inline result */}
+          {foundBooking && (
+            <div className="mt-3 bg-white rounded-lg border border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <span className="font-extrabold text-blue-600 font-mono tracking-widest">{foundBooking.bookingReference}</span>
+                <span className="text-gray-300">|</span>
+                <span className="font-semibold text-gray-800">{foundBooking.origin} → {foundBooking.destination}</span>
+                <span className="text-gray-300">|</span>
+                <span className="text-gray-600">{formatDisplayDate(foundBooking.departureDate)}</span>
+                <span className="text-gray-300">|</span>
+                <span className="font-bold text-blue-600">{formatPrice(foundBooking.totalAmount)}</span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${STATUS_COLORS[foundBooking.status] || 'bg-gray-100 text-gray-600'}`}>
+                  {foundBooking.status.replace('_', ' ')}
+                </span>
               </div>
-
-              <button
-                type="submit"
-                disabled={manageLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-colors disabled:opacity-70 flex items-center justify-center space-x-2 shadow-md shadow-blue-100 text-sm"
-              >
-                {manageLoading ? <AirplaneLoader /> : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    <span>Retrieve Booking</span>
-                  </>
+              <div className="flex items-center space-x-2">
+                {foundBooking.status === 'PENDING' && (
+                  <button onClick={() => navigate('/dashboard')} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-700">Pay Now</button>
                 )}
-              </button>
-
-              {/* Trust badges */}
-              <div className="flex items-center justify-center flex-wrap gap-5 pt-1">
-                <div className="flex items-center space-x-1.5 text-xs text-gray-400">
-                  <Lock className="w-3.5 h-3.5 text-green-500" />
-                  <span>Secure lookup</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-xs text-gray-400">
-                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                  <span>No login required</span>
-                </div>
-                <div className="flex items-center space-x-1.5 text-xs text-gray-400">
-                  <Clock className="w-3.5 h-3.5 text-green-500" />
-                  <span>Real-time status</span>
-                </div>
+                {['CONFIRMED', 'PAYMENT_PENDING'].includes(foundBooking.status) && (
+                  <button onClick={() => navigate('/dashboard')} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-700">View Booking</button>
+                )}
+                <button onClick={() => { setFoundBooking(null); setBookingRef(''); setLastName(''); }} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </form>
-
-            {/* Result card */}
-            {foundBooking && (
-              <div className="mt-6 bg-blue-50 rounded-xl border border-blue-100 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Booking Reference</p>
-                    <p className="text-2xl font-extrabold text-blue-600 font-mono tracking-widest">{foundBooking.bookingReference}</p>
-                  </div>
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${STATUS_COLORS[foundBooking.status] || 'bg-gray-100 text-gray-600'}`}>
-                    {foundBooking.status.replace('_', ' ')}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5 bg-white rounded-xl p-4 border border-blue-100">
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Route</p>
-                    <p className="font-bold text-gray-900">{foundBooking.origin} → {foundBooking.destination}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Departure</p>
-                    <p className="font-semibold text-gray-700 text-sm">{formatDisplayDate(foundBooking.departureDate)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Flight</p>
-                    <p className="font-semibold text-gray-700 text-sm">{foundBooking.flightNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Total Paid</p>
-                    <p className="font-bold text-blue-600">{formatPrice(foundBooking.totalAmount)}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {foundBooking.status === 'PENDING' && (
-                    <button onClick={() => navigate('/dashboard')}
-                      className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
-                      Complete Payment
-                    </button>
-                  )}
-                  {['CONFIRMED', 'PAYMENT_PENDING'].includes(foundBooking.status) && (
-                    <button onClick={() => navigate('/dashboard')}
-                      className="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors">
-                      View Full Booking
-                    </button>
-                  )}
-                  <button onClick={() => { setFoundBooking(null); setBookingRef(''); setLastName(''); }}
-                    className="bg-white border border-gray-200 text-gray-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
-                    Clear
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ══════════════════════════════════════
-          TRUSTED PARTNERS — official logos
+          TRUSTED PARTNERS — official coloured logos
       ══════════════════════════════════════ */}
-      <div className="bg-gray-50 py-10 border-t border-gray-100">
+      <div className="bg-white py-10 border-t border-gray-100">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
-          <p className="text-center text-gray-400 text-xs font-semibold mb-8 uppercase tracking-widest">Trusted Partners</p>
-          <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16">
-            {PARTNERS.map(p => (
-              <div key={p.name} className="flex items-center justify-center h-10 opacity-50 hover:opacity-90 transition-opacity duration-200">
-                <img
-                  src={p.logo}
-                  alt={p.name}
-                  className="h-8 sm:h-9 w-auto object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
-                  }}
-                />
-                <span className="text-sm font-bold text-gray-500 hidden">{p.name}</span>
-              </div>
+          <p className="text-center text-gray-400 text-xs font-semibold mb-8 uppercase tracking-widest">
+            Trusted &amp; Certified Partners
+          </p>
+          {/* Logo row — matches Travelbeta's style: coloured logos, dividers, generous spacing */}
+          <div className="flex flex-wrap items-center justify-center">
+            {PARTNERS.map((p, index) => (
+              <React.Fragment key={p.name}>
+                <div className="flex items-center justify-center px-6 sm:px-10 py-3">
+                  <img
+                    src={p.logo}
+                    alt={p.name}
+                    className="h-7 sm:h-9 w-auto object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  {/* Fallback text if image fails */}
+                  <span className="text-sm font-bold text-gray-500 hidden">{p.name}</span>
+                </div>
+                {/* Vertical divider between logos — hidden on last item */}
+                {index < PARTNERS.length - 1 && (
+                  <div className="hidden sm:block w-px h-8 bg-gray-200 flex-shrink-0"></div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>

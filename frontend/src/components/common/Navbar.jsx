@@ -39,11 +39,9 @@ const Navbar = () => {
     { label: 'Price Alerts',   action: () => { navigate('/alerts');  setMenuOpen(false); }, icon: Bell        },
   ];
 
-  // Announcement messages — no emojis
+  // Exactly 2 announcement messages
   const announcements = [
-    'Transparent pricing — no hidden fees, no surprises.',
-    'Secure checkout — bank-grade SSL on every transaction.',
-    'Instant confirmations — your e-ticket delivered immediately.',
+    'Transparent pricing, secure checkout, and instant confirmations',
     '24/7 Support: Call or WhatsApp +234 800 000 0000',
   ];
 
