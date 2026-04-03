@@ -1,10 +1,9 @@
-import useAuthStore from '../store/authStore';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { flightsAPI } from '../services/api';
 import useFlightStore from '../store/flightStore';
 import toast from 'react-hot-toast';
-import { Plane, Search, Calendar, Users, Plus, Trash2, FileSearch, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, ChevronRight } from 'lucide-react';
+import { Plane, Search, Calendar, Users, Plus, Trash2, FileSearch, ChevronRight } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
 import axios from 'axios';
 
@@ -21,7 +20,6 @@ const AirplaneLoader = () => (
 );
 
 const HomePage = () => {
-  const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const { searchParams, setSearchParams, setSearchResults, setIsSearching, setMultiCityLeg, addMultiCityLeg, removeMultiCityLeg } = useFlightStore();
   const [loading, setLoading] = useState(false);
@@ -113,7 +111,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
 
       {/* Announcement Bar */}
       <div className="bg-blue-700 text-white py-2 overflow-hidden">
@@ -129,34 +127,6 @@ const HomePage = () => {
           ))}
         </div>
       </div>
-
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Plane className="text-white w-5 h-5" />
-            </div>
-            <span className="text-blue-700 text-2xl font-bold">Aerwiz</span>
-          </div>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-600">
-            <span onClick={() => navigate('/')} className="hover:text-blue-600 cursor-pointer">Flights</span>
-            <span onClick={() => navigate('/baggage')} className="hover:text-blue-600 cursor-pointer">Baggage</span>
-            <span onClick={() => navigate('/alerts')} className="hover:text-blue-600 cursor-pointer">Price Alerts</span>
-            <span className="hover:text-blue-600 cursor-pointer">Deals</span>
-          </nav>
-          <div className="flex items-center space-x-3">
-            {isAuthenticated ? (
-              <button onClick={() => navigate('/dashboard')} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 text-sm transition-colors">My Account</button>
-            ) : (
-              <>
-                <button onClick={() => navigate('/login')} className="text-gray-600 hover:text-blue-600 font-medium text-sm">Login</button>
-                <button onClick={() => navigate('/register')} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 text-sm transition-colors">Sign Up</button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <div className="relative">
@@ -174,10 +144,9 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Search Form - overlapping hero */}
+        {/* Search Form */}
         <div className="max-w-4xl mx-auto px-4 -mt-24 relative z-10 pb-8">
           <div className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 border border-gray-100">
-            {/* Trip Type Tabs */}
             <div className="flex space-x-1 mb-5 bg-gray-100 rounded-xl p-1">
               {['ONE_WAY', 'ROUND_TRIP', 'MULTI_CITY'].map((type) => (
                 <button key={type} onClick={() => setSearchParams({ tripType: type })}
@@ -334,11 +303,11 @@ const HomePage = () => {
               { from: 'LOS', to: 'NBO', fromCity: 'Lagos', toCity: 'Nairobi', flag: '🇰🇪' },
               { from: 'ABV', to: 'DXB', fromCity: 'Abuja', toCity: 'Dubai', flag: '🇦🇪' },
               { from: 'LOS', to: 'ADD', fromCity: 'Lagos', toCity: 'Addis Ababa', flag: '🇪🇹' },
-            ].map((route) => (
-              <div key={route.to}
+            ].map((route, index) => (
+              <div key={index}
                 onClick={() => {
                   setSearchParams({ origin: route.from, destination: route.to, tripType: 'ONE_WAY' });
-                  document.querySelector('form').scrollIntoView({ behavior: 'smooth' });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="bg-white border border-gray-200 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group">
                 <div className="text-2xl mb-2">{route.flag}</div>
@@ -355,8 +324,7 @@ const HomePage = () => {
       </div>
 
       {/* Manage My Booking */}
-    
-<div id="manage-booking-section" className="bg-blue-700 py-12 px-4">
+      <div id="manage-booking-section" className="bg-blue-700 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center space-x-3 mb-6">
             <FileSearch className="w-6 h-6 text-white" />
@@ -430,7 +398,7 @@ const HomePage = () => {
               { name: 'Visa', color: '#1A1F71' },
               { name: 'Mastercard', color: '#EB001B' },
             ].map(p => (
-              <div key={p.name} className="flex items-center justify-center">
+              <div key={p.name}>
                 <span className="text-lg font-bold" style={{ color: p.color }}>{p.name}</span>
               </div>
             ))}
@@ -461,86 +429,6 @@ const HomePage = () => {
           )}
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="bg-blue-900 text-white pt-12 pb-6 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-            {/* Brand */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                  <Plane className="text-blue-700 w-5 h-5" />
-                </div>
-                <span className="text-xl font-bold">Aerwiz</span>
-              </div>
-              <p className="text-blue-300 text-sm leading-relaxed">Your trusted platform for booking flights across Africa and the world at the best prices.</p>
-              <div className="flex space-x-3 mt-4">
-                {[
-                  { icon: Facebook, label: 'Facebook' },
-                  { icon: Twitter, label: 'Twitter' },
-                  { icon: Instagram, label: 'Instagram' },
-                  { icon: Linkedin, label: 'LinkedIn' },
-                ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors">
-                    <Icon className="w-4 h-4 text-blue-300" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Services */}
-            <div>
-              <h4 className="font-bold text-white mb-4">Services</h4>
-              <ul className="space-y-2 text-blue-300 text-sm">
-                {['Flight Search', 'Price Alerts', 'Baggage Calculator', 'Manage Booking', 'Seat Selection'].map(item => (
-                  <li key={item} className="hover:text-white cursor-pointer transition-colors">{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div>
-              <h4 className="font-bold text-white mb-4">Company</h4>
-              <ul className="space-y-2 text-blue-300 text-sm">
-                {['About Us', 'Contact Us', 'Careers', 'Blog', 'Become an Affiliate'].map(item => (
-                  <li key={item} className="hover:text-white cursor-pointer transition-colors">{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Legal & Contact */}
-            <div>
-              <h4 className="font-bold text-white mb-4">Legal</h4>
-              <ul className="space-y-2 text-blue-300 text-sm mb-4">
-                {['Privacy Policy', 'Terms & Conditions', 'Cookie Policy', 'Refund Policy'].map(item => (
-                  <li key={item} className="hover:text-white cursor-pointer transition-colors">{item}</li>
-                ))}
-              </ul>
-              <h4 className="font-bold text-white mb-3">Contact</h4>
-              <div className="space-y-2 text-blue-300 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>+234 800 000 0000</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>support@aerwiz.com</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Lagos, Nigeria</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-blue-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-blue-400 text-xs">
-            <p>© 2026 Aerwiz. All Rights Reserved.</p>
-            <p className="mt-2 sm:mt-0">Powered by Amadeus · Payments by Paystack</p>
-          </div>
-        </div>
-      </footer>
 
     </div>
   );
