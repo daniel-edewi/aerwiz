@@ -1,15 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useFlightStore from '../store/flightStore';
+import { flightsAPI } from '../services/api';
 import {
   Plane, Clock, ArrowRight, SlidersHorizontal,
-  X, ChevronDown, ChevronUp, Check, Filter
+  X, ChevronDown, ChevronUp, Check, Filter,
+  ChevronLeft, ChevronRight, Calendar
 } from 'lucide-react';
 
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
 const formatDuration = (dur) => dur?.replace('PT', '').replace('H', 'h ').replace('M', 'm') || '';
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
+const formatShortPrice = (amount) => {
+  if (amount >= 1000000) return `₦${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}K`;
+  return `₦${amount}`;
+};
 
 const AIRLINE_NAMES = {
   AT: 'Royal Air Maroc', KQ: 'Kenya Airways', MS: 'EgyptAir',
@@ -29,6 +36,22 @@ const getDurationMinutes = (duration) => {
   const h = parseInt(d.split('H')[0] || 0);
   const m = parseInt((d.split('H')[1] || d).replace('M', '') || 0);
   return h * 60 + m;
+};
+
+const addDays = (dateStr, days) => {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+};
+
+const formatCalendarDay = (dateStr) => {
+  const d = new Date(dateStr);
+  return {
+    day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+    date: d.getDate(),
+    month: d.toLocaleDateString('en-US', { month: 'short' }),
+    full: dateStr
+  };
 };
 
 const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
@@ -91,11 +114,74 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
 
 const FlightsPage = () => {
   const navigate = useNavigate();
-  const { searchResults, searchParams, setSelectedFlight } = useFlightStore();
+  const { searchResults, searchParams, setSelectedFlight, setSearchResults, setSearchParams, setIsSearching } = useFlightStore();
   const [sortBy, setSortBy] = useState('price');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ stops: 'all', maxPrice: '', airlines: [] });
   const [expandedFlight, setExpandedFlight] = useState(null);
+  const [calendarPrices, setCalendarPrices] = useState({});
+  const [calendarLoading, setCalendarLoading] = useState({});
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(searchParams.departureDate);
+  const [reloading, setReloading] = useState(false);
+  const matrixRef = useRef(null);
+
+  // Generate 7 days: 3 before and 3 after the searched date
+  const calendarDays = useMemo(() => {
+    if (!searchParams.departureDate) return [];
+    return [-3, -2, -1, 0, 1, 2, 3].map(offset => addDays(searchParams.departureDate, offset));
+  }, [searchParams.departureDate]);
+
+  // Fetch lowest price for each calendar day
+  useEffect(() => {
+    if (!searchParams.origin || !searchParams.destination || !calendarDays.length) return;
+    calendarDays.forEach(async (date) => {
+      if (calendarPrices[date] !== undefined || calendarLoading[date]) return;
+      setCalendarLoading(prev => ({ ...prev, [date]: true }));
+      try {
+        const res = await flightsAPI.search({
+          origin: searchParams.origin.toUpperCase(),
+          destination: searchParams.destination.toUpperCase(),
+          departureDate: date,
+          adults: searchParams.adults,
+          cabinClass: searchParams.cabinClass
+        });
+        const results = res.data.data;
+        if (results && results.length > 0) {
+          const lowest = Math.min(...results.map(f => parseFloat(f.price.grandTotal)));
+          setCalendarPrices(prev => ({ ...prev, [date]: lowest }));
+        } else {
+          setCalendarPrices(prev => ({ ...prev, [date]: null }));
+        }
+      } catch {
+        setCalendarPrices(prev => ({ ...prev, [date]: null }));
+      } finally {
+        setCalendarLoading(prev => ({ ...prev, [date]: false }));
+      }
+    });
+  }, [calendarDays]);
+
+  const handleCalendarDateSelect = async (date) => {
+    if (date === selectedCalendarDate) return;
+    setSelectedCalendarDate(date);
+    setReloading(true);
+    setSearchParams({ departureDate: date });
+    try {
+      setIsSearching(true);
+      const res = await flightsAPI.search({
+        origin: searchParams.origin.toUpperCase(),
+        destination: searchParams.destination.toUpperCase(),
+        departureDate: date,
+        adults: searchParams.adults,
+        cabinClass: searchParams.cabinClass
+      });
+      setSearchResults(res.data.data);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setReloading(false);
+      setIsSearching(false);
+    }
+  };
 
   const airlines = useMemo(() => {
     return [...new Set(searchResults.map(f => f.itineraries[0].segments[0].carrierCode))];
@@ -148,6 +234,11 @@ const FlightsPage = () => {
     return [...filtered].sort((a, b) => getDurationMinutes(a.itineraries[0].duration) - getDurationMinutes(b.itineraries[0].duration))[0];
   }, [filtered]);
 
+  const lowestCalendarPrice = useMemo(() => {
+    const prices = Object.values(calendarPrices).filter(p => p !== null && p !== undefined);
+    return prices.length ? Math.min(...prices) : null;
+  }, [calendarPrices]);
+
   const toggleAirline = (code) => {
     setFilters(f => ({
       ...f,
@@ -157,7 +248,7 @@ const FlightsPage = () => {
 
   const activeFiltersCount = (filters.stops !== 'all' ? 1 : 0) + (filters.maxPrice ? 1 : 0) + filters.airlines.length;
 
-  if (!searchResults.length) {
+  if (!searchResults.length && !reloading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
@@ -179,21 +270,17 @@ const FlightsPage = () => {
 
       {/* Search Summary Bar */}
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-        <div className="w-full px-4 sm:px-6 py-3">
-          <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
+        <div className="w-full px-4 sm:px-6 py-3 max-w-screen-2xl mx-auto">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 text-sm overflow-x-auto">
-              <span className="font-black text-gray-900 text-base uppercase tracking-wide whitespace-nowrap">
-                {searchParams.origin}
-              </span>
+              <span className="font-black text-gray-900 text-base uppercase tracking-wide whitespace-nowrap">{searchParams.origin}</span>
               <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <span className="font-black text-gray-900 text-base uppercase tracking-wide whitespace-nowrap">
-                {searchParams.destination}
-              </span>
+              <span className="font-black text-gray-900 text-base uppercase tracking-wide whitespace-nowrap">{searchParams.destination}</span>
               {searchParams.tripType === 'ROUND_TRIP' && (
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">Round Trip</span>
               )}
               <span className="text-gray-300 hidden sm:block">|</span>
-              <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">{searchParams.departureDate}</span>
+              <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">{selectedCalendarDate}</span>
               <span className="text-gray-300 hidden sm:block">|</span>
               <span className="text-gray-500 text-xs whitespace-nowrap hidden sm:block">{searchParams.adults} Adult{searchParams.adults > 1 ? 's' : ''}</span>
               <span className="text-gray-300 hidden sm:block">|</span>
@@ -207,40 +294,109 @@ const FlightsPage = () => {
         </div>
       </div>
 
-      {/* Airline Price Matrix — Airlines as columns, Stops as rows */}
+      {/* Fare Calendar */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="w-full px-4 sm:px-6 py-3 max-w-screen-2xl mx-auto">
+          <div className="flex items-center space-x-2 mb-2">
+            <Calendar className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Fare Calendar — Click a date to view prices</span>
+          </div>
+          <div className="flex items-stretch space-x-1 overflow-x-auto pb-1">
+            {calendarDays.map((date) => {
+              const info = formatCalendarDay(date);
+              const price = calendarPrices[date];
+              const isLoading = calendarLoading[date];
+              const isSelected = date === selectedCalendarDate;
+              const isSearchedDate = date === searchParams.departureDate;
+              const isCheapest = price !== null && price !== undefined && price === lowestCalendarPrice;
+              const isToday = date === new Date().toISOString().split('T')[0];
+
+              return (
+                <button
+                  key={date}
+                  onClick={() => handleCalendarDateSelect(date)}
+                  disabled={isLoading || reloading}
+                  className={`flex-shrink-0 flex flex-col items-center px-4 py-2.5 rounded-lg border transition-all min-w-[80px] ${
+                    isSelected
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                      : isCheapest && !isSelected
+                      ? 'bg-green-50 border-green-300 text-green-800 hover:bg-green-100'
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-blue-50 hover:border-blue-300'
+                  } disabled:opacity-50`}
+                >
+                  <span className={`text-xs font-semibold uppercase ${isSelected ? 'text-blue-200' : 'text-gray-400'}`}>
+                    {info.day}
+                  </span>
+                  <span className={`text-lg font-black leading-tight ${isSelected ? 'text-white' : 'text-gray-800'}`}>
+                    {info.date}
+                  </span>
+                  <span className={`text-xs ${isSelected ? 'text-blue-200' : 'text-gray-400'}`}>
+                    {info.month}
+                  </span>
+                  <div className="mt-1.5 h-5 flex items-center justify-center">
+                    {isLoading ? (
+                      <div className={`w-3 h-3 border-2 rounded-full animate-spin ${isSelected ? 'border-white border-t-transparent' : 'border-blue-400 border-t-transparent'}`}></div>
+                    ) : price ? (
+                      <span className={`text-xs font-bold ${isSelected ? 'text-white' : isCheapest ? 'text-green-700' : 'text-blue-600'}`}>
+                        {formatShortPrice(price)}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-300">—</span>
+                    )}
+                  </div>
+                  {isCheapest && !isSelected && (
+                    <span className="text-xs text-green-600 font-bold mt-0.5">Best</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Airline Price Matrix — ITA Style */}
       {airlineMatrix.length > 0 && (
-        <div className="bg-white border-b border-gray-100 shadow-sm">
-          <div className="w-full px-4 sm:px-6 max-w-screen-2xl mx-auto">
-            <div className="overflow-x-auto">
-              <table className="text-sm" style={{ minWidth: `${airlineMatrix.length * 140 + 140}px` }}>
+        <div className="bg-white border-b border-gray-200">
+          <div className="w-full max-w-screen-2xl mx-auto">
+            <div
+              ref={matrixRef}
+              className="overflow-x-auto"
+              style={{ scrollbarWidth: 'thin' }}
+            >
+              <table
+                className="text-sm border-collapse"
+                style={{ minWidth: `${Math.max(airlineMatrix.length * 130 + 120, 600)}px` }}
+              >
                 <thead>
-                  <tr className="border-b border-gray-100">
-                    {/* Top-left empty cell */}
-                    <th className="py-4 pr-6 text-left w-36">
-                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Airlines</span>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    {/* Top-left header cell */}
+                    <th className="sticky left-0 z-10 bg-gray-50 border-r border-gray-200 px-4 py-3 text-left w-28">
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Stops / Airline</span>
                     </th>
-                    {/* Airline columns */}
-                    {airlineMatrix.map(airline => (
-                      <th key={airline.code} className="py-4 px-4 text-center">
+                    {/* Airline header columns */}
+                    {airlineMatrix.map((airline, i) => (
+                      <th key={airline.code}
+                        className={`px-4 py-3 text-center border-r border-gray-100 ${i === airlineMatrix.length - 1 ? '' : ''}`}
+                      >
                         <button
                           onClick={() => {
                             setFilters(f => ({ ...f, airlines: [airline.code] }));
-                            window.scrollTo({ top: 500, behavior: 'smooth' });
+                            window.scrollTo({ top: 600, behavior: 'smooth' });
                           }}
-                          className="flex flex-col items-center space-y-2 group mx-auto hover:opacity-80 transition-opacity"
+                          className="flex flex-col items-center space-y-1.5 group mx-auto"
                         >
-                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-blue-300 transition-colors">
+                          <div className="w-11 h-11 rounded-lg overflow-hidden bg-white border border-gray-200 flex items-center justify-center shadow-sm group-hover:border-blue-400 transition-colors">
                             <img
                               src={getAirlineLogo(airline.code)}
                               alt={airline.code}
-                              className="w-10 h-10 object-contain"
+                              className="w-9 h-9 object-contain"
                               onError={(e) => {
                                 e.target.style.display = 'none';
                                 e.target.parentElement.innerHTML = `<span class="text-xs font-black text-blue-700">${airline.code}</span>`;
                               }}
                             />
                           </div>
-                          <span className="text-xs font-semibold text-gray-700 whitespace-nowrap group-hover:text-blue-600 transition-colors leading-tight text-center max-w-24">
+                          <span className="text-xs font-semibold text-gray-600 group-hover:text-blue-600 transition-colors whitespace-nowrap leading-tight">
                             {AIRLINE_NAMES[airline.code] || airline.code}
                           </span>
                         </button>
@@ -249,97 +405,79 @@ const FlightsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Nonstop row */}
-                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 pr-6">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0"></div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Nonstop</p>
-                          <p className="text-xs text-gray-400">Direct flights</p>
+                  {[
+                    { key: 'nonstop', label: 'Nonstop', sub: 'Direct', dot: 'bg-green-500', filter: 'direct', textColor: 'text-green-700', hoverColor: 'hover:text-green-900' },
+                    { key: '1stop', label: '1 Stop', sub: 'One connection', dot: 'bg-orange-400', filter: '1stop', textColor: 'text-orange-600', hoverColor: 'hover:text-orange-800' },
+                    { key: '1plus', label: '2+ Stops', sub: 'Multiple', dot: 'bg-red-400', filter: 'all', textColor: 'text-red-600', hoverColor: 'hover:text-red-800' },
+                  ].map((row, rowIdx) => (
+                    <tr
+                      key={row.key}
+                      className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                    >
+                      {/* Row label — sticky left */}
+                      <td className="sticky left-0 z-10 bg-inherit border-r border-gray-200 px-4 py-3">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${row.dot}`}></div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-700 whitespace-nowrap">{row.label}</p>
+                            <p className="text-xs text-gray-400">{row.sub}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    {airlineMatrix.map(airline => (
-                      <td key={airline.code} className="py-3 px-4 text-center">
-                        {airline.nonstop ? (
-                          <button
-                            onClick={() => {
-                              setFilters(f => ({ ...f, airlines: [airline.code], stops: 'direct' }));
-                              window.scrollTo({ top: 500, behavior: 'smooth' });
-                            }}
-                            className="inline-block bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 font-bold text-xs px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                          >
-                            {formatPrice(airline.nonstop)}
-                          </button>
-                        ) : (
-                          <span className="text-gray-200 text-base">—</span>
-                        )}
                       </td>
-                    ))}
-                  </tr>
-
-                  {/* 1 Stop row */}
-                  <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    <td className="py-3 pr-6">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-orange-400 flex-shrink-0"></div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">1 Stop</p>
-                          <p className="text-xs text-gray-400">One connection</p>
-                        </div>
-                      </div>
-                    </td>
-                    {airlineMatrix.map(airline => (
-                      <td key={airline.code} className="py-3 px-4 text-center">
-                        {airline['1stop'] ? (
-                          <button
-                            onClick={() => {
-                              setFilters(f => ({ ...f, airlines: [airline.code], stops: '1stop' }));
-                              window.scrollTo({ top: 500, behavior: 'smooth' });
-                            }}
-                            className="inline-block bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 font-bold text-xs px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                          >
-                            {formatPrice(airline['1stop'])}
-                          </button>
-                        ) : (
-                          <span className="text-gray-200 text-base">—</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-
-                  {/* 1+ Stops row */}
-                  <tr className="hover:bg-gray-50 transition-colors">
-                    <td className="py-3 pr-6">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-400 flex-shrink-0"></div>
-                        <div>
-                          <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">1+ Stops</p>
-                          <p className="text-xs text-gray-400">Multiple stops</p>
-                        </div>
-                      </div>
-                    </td>
-                    {airlineMatrix.map(airline => (
-                      <td key={airline.code} className="py-3 px-4 text-center">
-                        {airline['1plus'] ? (
-                          <button
-                            onClick={() => {
-                              setFilters(f => ({ ...f, airlines: [airline.code] }));
-                              window.scrollTo({ top: 500, behavior: 'smooth' });
-                            }}
-                            className="inline-block bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold text-xs px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                          >
-                            {formatPrice(airline['1plus'])}
-                          </button>
-                        ) : (
-                          <span className="text-gray-200 text-base">—</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+                      {/* Price cells */}
+                      {airlineMatrix.map((airline) => {
+                        const price = airline[row.key];
+                        const isLowestInRow = price !== null && price !== undefined &&
+                          price === Math.min(...airlineMatrix.map(a => a[row.key]).filter(p => p !== null && p !== undefined));
+                        return (
+                          <td key={airline.code} className="px-4 py-3 text-center border-r border-gray-100">
+                            {price ? (
+                              <button
+                                onClick={() => {
+                                  setFilters(f => ({ ...f, airlines: [airline.code], stops: row.filter }));
+                                  window.scrollTo({ top: 600, behavior: 'smooth' });
+                                }}
+                                className={`text-sm font-bold transition-colors ${row.textColor} ${row.hoverColor} hover:underline ${isLowestInRow ? 'underline' : ''}`}
+                                title={isLowestInRow ? 'Lowest price for this stop type' : ''}
+                              >
+                                {formatPrice(price)}
+                                {isLowestInRow && (
+                                  <span className="block text-xs font-bold text-green-600 mt-0.5">Lowest</span>
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-gray-200 text-lg select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
+            </div>
+            {/* Scroll hint */}
+            {airlineMatrix.length > 4 && (
+              <div className="flex items-center justify-end px-4 py-1.5 border-t border-gray-100">
+                <span className="text-xs text-gray-400 flex items-center space-x-1">
+                  <ChevronLeft className="w-3 h-3" />
+                  <span>Scroll to see all airlines</span>
+                  <ChevronRight className="w-3 h-3" />
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reloading Overlay */}
+      {reloading && (
+        <div className="fixed inset-0 bg-white/60 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-xl px-8 py-6 flex items-center space-x-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div>
+              <p className="font-bold text-gray-800">Searching flights</p>
+              <p className="text-gray-500 text-sm">{searchParams.origin} → {searchParams.destination} · {selectedCalendarDate}</p>
             </div>
           </div>
         </div>
@@ -422,7 +560,7 @@ const FlightsPage = () => {
                   {filtered.length} flight{filtered.length !== 1 ? 's' : ''} found
                 </h1>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {searchParams.origin} to {searchParams.destination} · {searchParams.departureDate}
+                  {searchParams.origin} to {searchParams.destination} · {selectedCalendarDate}
                 </p>
               </div>
               <div className="flex items-center space-x-2">
@@ -629,7 +767,11 @@ const FlightsPage = () => {
                             Select Flight
                           </button>
                           {flight.numberOfBookableSeats && (
-                            <p className="text-xs text-red-500 font-semibold">{flight.numberOfBookableSeats} seats remaining</p>
+                            <p className={`text-xs font-semibold ${flight.numberOfBookableSeats <= 4 ? 'text-red-500' : 'text-orange-500'}`}>
+                              {flight.numberOfBookableSeats <= 4
+                                ? `Only ${flight.numberOfBookableSeats} seat${flight.numberOfBookableSeats > 1 ? 's' : ''} left`
+                                : `${flight.numberOfBookableSeats} seats available`}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -639,7 +781,7 @@ const FlightsPage = () => {
               })}
             </div>
 
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !reloading && (
               <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
                 <Plane className="w-12 h-12 text-gray-200 mx-auto mb-3" />
                 <p className="text-gray-500 font-semibold">No flights match your filters</p>
