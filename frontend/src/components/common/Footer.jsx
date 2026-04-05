@@ -12,26 +12,11 @@ const Footer = () => {
 
           {/* Brand */}
           <div>
-            <div
-              className="mb-4 cursor-pointer inline-block"
-              onClick={() => navigate('/')}
-            >
-              {/* Inline SVG — white/light-blue version for dark footer background */}
-              <svg
-                viewBox="0 0 800 300"
-                height="48"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-label="Aerwiz"
-              >
-                <text
-                  x="400"
-                  y="200"
-                  textAnchor="middle"
+            <div className="mb-4 cursor-pointer inline-block" onClick={() => navigate('/')}>
+              <svg viewBox="0 0 800 300" height="48" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
+                <text x="400" y="200" textAnchor="middle"
                   fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-                  fontSize="160"
-                  fontWeight="800"
-                  letterSpacing="-5"
-                >
+                  fontSize="160" fontWeight="800" letterSpacing="-5">
                   <tspan fill="white">aer</tspan>
                   <tspan fill="#93c5fd">wiz</tspan>
                 </text>
@@ -42,10 +27,7 @@ const Footer = () => {
             </p>
             <div className="flex space-x-3">
               {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors"
-                >
+                <div key={i} className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors">
                   <Icon className="w-4 h-4 text-blue-300" />
                 </div>
               ))}
@@ -63,23 +45,27 @@ const Footer = () => {
                 { label: 'Baggage Calculator', action: () => navigate('/baggage') },
                 { label: 'Seat Selection',     action: () => navigate('/') },
               ].map(item => (
-                <li
-                  key={item.label}
-                  onClick={item.action}
-                  className="hover:text-white cursor-pointer transition-colors"
-                >
+                <li key={item.label} onClick={item.action} className="hover:text-white cursor-pointer transition-colors">
                   {item.label}
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Company */}
+          {/* Company — all links now navigate */}
           <div>
             <h4 className="font-bold text-white mb-4">Company</h4>
             <ul className="space-y-2 text-blue-300 text-sm">
-              {['About Us', 'Contact Us', 'Careers', 'Blog', 'Become an Affiliate'].map(item => (
-                <li key={item} className="hover:text-white cursor-pointer transition-colors">{item}</li>
+              {[
+                { label: 'About Us',            path: '/about' },
+                { label: 'Contact Us',          path: '/contact' },
+                { label: 'Careers',             path: '/careers' },
+                { label: 'Blog',                path: '/blog' },
+                { label: 'Become an Affiliate', path: '/affiliate' },
+              ].map(item => (
+                <li key={item.label} onClick={() => navigate(item.path)} className="hover:text-white cursor-pointer transition-colors">
+                  {item.label}
+                </li>
               ))}
             </ul>
           </div>
