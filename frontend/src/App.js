@@ -23,6 +23,10 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import CookiePolicyPage from './pages/CookiePolicyPage';
 import RefundPolicyPage from './pages/RefundPolicyPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsPage from './pages/TermsPage';
+import CookiePolicyPage from './pages/CookiePolicyPage';
+import RefundPolicyPage from './pages/RefundPolicyPage';
 
 function App() {
   return (
@@ -47,6 +51,10 @@ function App() {
 <Route path="/careers" element={<CareersPage />} />
 <Route path="/blog" element={<BlogPage />} />
 <Route path="/affiliate" element={<AffiliatePage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/cookies" element={<CookiePolicyPage />} />
+          <Route path="/refund" element={<RefundPolicyPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/cookies" element={<CookiePolicyPage />} />

@@ -52,7 +52,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Company — all links now navigate */}
+          {/* Company */}
           <div>
             <h4 className="font-bold text-white mb-4">Company</h4>
             <ul className="space-y-2 text-blue-300 text-sm">
@@ -74,8 +74,15 @@ const Footer = () => {
           <div>
             <h4 className="font-bold text-white mb-4">Legal</h4>
             <ul className="space-y-2 text-blue-300 text-sm mb-5">
-              {['Privacy Policy', 'Terms & Conditions', 'Cookie Policy', 'Refund Policy'].map(item => (
-                <li key={item} className="hover:text-white cursor-pointer transition-colors">{item}</li>
+              {[
+                { label: 'Privacy Policy',     path: '/privacy' },
+                { label: 'Terms & Conditions', path: '/terms' },
+                { label: 'Cookie Policy',      path: '/cookies' },
+                { label: 'Refund Policy',      path: '/refund' },
+              ].map(item => (
+                <li key={item.label} onClick={() => navigate(item.path)} className="hover:text-white cursor-pointer transition-colors">
+                  {item.label}
+                </li>
               ))}
             </ul>
             <h4 className="font-bold text-white mb-3">Contact</h4>
