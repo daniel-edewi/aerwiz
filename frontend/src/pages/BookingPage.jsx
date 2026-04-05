@@ -110,7 +110,23 @@ const StepIndicator = ({ current }) => {
 const BookingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedFlight, searchParams } = useFlightStore();
+  const { selectedFlight, searchParams, setSelectedFlight } = useFlightStore();
+
+  // Persist selected flight across refresh
+  React.useEffect(() => {
+    if (selectedFlight) {
+      sessionStorage.setItem('aerwiz_selected_flight', JSON.stringify(selectedFlight));
+    }
+  }, [selectedFlight]);
+
+  React.useEffect(() => {
+    if (!selectedFlight) {
+      const saved = sessionStorage.getItem('aerwiz_selected_flight');
+      if (saved) {
+        try { setSelectedFlight(JSON.parse(saved)); } catch (e) {}
+      }
+    }
+  }, []);
   const { isAuthenticated, token } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [promo, setPromo] = useState(null);
