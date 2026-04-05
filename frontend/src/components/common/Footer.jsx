@@ -1,25 +1,41 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plane, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 
 const Footer = () => {
   const navigate = useNavigate();
 
   return (
     <footer className="bg-blue-900 text-white pt-12 pb-6 px-4">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-screen-2xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-10">
 
           {/* Brand */}
           <div>
             <div
-              className="flex items-center space-x-2 mb-4 cursor-pointer"
+              className="mb-4 cursor-pointer inline-block"
               onClick={() => navigate('/')}
             >
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <Plane className="text-blue-700 w-5 h-5" />
-              </div>
-              <span className="text-xl font-bold">Aerwiz</span>
+              {/* White version of the logo for dark background */}
+              <svg
+                viewBox="0 0 800 300"
+                height="36"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-label="Aerwiz"
+              >
+                <text
+                  x="400"
+                  y="200"
+                  text-anchor="middle"
+                  font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+                  font-size="160"
+                  font-weight="800"
+                  letter-spacing="-5"
+                >
+                  <tspan fill="white">aer</tspan>
+                  <tspan fill="#93c5fd">wiz</tspan>
+                </text>
+              </svg>
             </div>
             <p className="text-blue-300 text-sm leading-relaxed mb-4">
               Your trusted platform for booking flights across Africa and the world at the best prices.

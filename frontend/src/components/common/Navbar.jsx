@@ -33,13 +33,12 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { label: 'Flights',        action: () => { navigate('/');        setMenuOpen(false); }, icon: Plane       },
-    { label: 'Manage Booking', action: handleManageBooking,                                  icon: FileSearch  },
-    { label: 'Baggage',        action: () => { navigate('/baggage'); setMenuOpen(false); }, icon: Luggage     },
-    { label: 'Price Alerts',   action: () => { navigate('/alerts');  setMenuOpen(false); }, icon: Bell        },
+    { label: 'Flights',        action: () => { navigate('/');        setMenuOpen(false); }, icon: Plane      },
+    { label: 'Manage Booking', action: handleManageBooking,                                  icon: FileSearch },
+    { label: 'Baggage',        action: () => { navigate('/baggage'); setMenuOpen(false); }, icon: Luggage    },
+    { label: 'Price Alerts',   action: () => { navigate('/alerts');  setMenuOpen(false); }, icon: Bell       },
   ];
 
-  // Exactly 2 announcement messages
   const announcements = [
     'Transparent pricing, secure checkout, and instant confirmations',
     '24/7 Support: Call or WhatsApp +234 800 000 0000',
@@ -48,15 +47,13 @@ const Navbar = () => {
   return (
     <div className="sticky top-0 z-50">
 
-      {/* ── Announcement Bar ── */}
+      {/* Announcement Bar */}
       <div className="bg-blue-700 text-white py-2 overflow-hidden">
         <div className="flex whitespace-nowrap animate-marquee">
-          {/* Duplicate 3× so the scroll looks seamless */}
           {[...Array(3)].map((_, i) => (
             <span key={i} className="inline-flex items-center gap-10 px-6 text-xs sm:text-sm font-medium tracking-wide">
               {announcements.map((msg, j) => (
                 <span key={j} className="flex items-center gap-2">
-                  {/* Subtle dot separator before each item */}
                   <span className="w-1 h-1 rounded-full bg-blue-300 flex-shrink-0"></span>
                   <span>{msg}</span>
                 </span>
@@ -66,23 +63,24 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* ── Main Header ── */}
+      {/* Main Header */}
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
 
-            {/* Logo */}
+            {/* Logo image */}
             <div
-              className="flex items-center space-x-2 cursor-pointer flex-shrink-0"
+              className="flex items-center cursor-pointer flex-shrink-0"
               onClick={() => navigate('/')}
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-                <Plane className="text-white w-4 h-4" />
-              </div>
-              <span className="text-blue-700 text-xl font-extrabold tracking-tight">Aerwiz</span>
+              <img
+                src="/aerwiz-logo-03.svg"
+                alt="Aerwiz"
+                className="h-8 w-auto"
+              />
             </div>
 
-            {/* Desktop Nav Links */}
+            {/* Desktop Nav */}
             <nav className="hidden md:flex items-center space-x-1">
               {navLinks.map(link => (
                 <button
@@ -182,7 +180,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* ── Mobile Menu ── */}
+          {/* Mobile Menu */}
           {menuOpen && (
             <div className="md:hidden border-t border-gray-100 py-3 space-y-1">
               {navLinks.map(link => (
@@ -196,7 +194,6 @@ const Navbar = () => {
                 </button>
               ))}
 
-              {/* Support line in mobile menu */}
               <a
                 href="tel:+2348000000000"
                 className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
