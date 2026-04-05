@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useFlightStore from '../store/flightStore';
 import {
@@ -31,14 +31,9 @@ const getDurationMinutes = (duration) => {
   return h * 60 + m;
 };
 
-// ─── Flight Leg — fully responsive, no overflow ───────────────────────────
 const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
   <div className="w-full min-w-0">
-
-    {/* Mobile layout: stacked */}
     <div className="flex items-center w-full min-w-0 gap-2 sm:gap-4">
-
-      {/* Airline logo + name */}
       <div className="flex items-center space-x-2 w-24 sm:w-40 flex-shrink-0 min-w-0">
         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
           <img
@@ -59,21 +54,15 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
         </div>
       </div>
 
-      {/* Route: time → stops → time */}
       <div className="flex items-center flex-1 min-w-0 justify-between gap-1">
-
-        {/* Departure */}
         <div className="text-left flex-shrink-0">
           <p className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-none">
             {formatTime(seg.departure.at)}
           </p>
           <p className="text-xs font-bold text-gray-600 mt-0.5">{seg.departure.iataCode}</p>
-          {seg.departure.terminal && (
-            <p className="text-xs text-gray-400 hidden sm:block">T{seg.departure.terminal}</p>
-          )}
+          {seg.departure.terminal && <p className="text-xs text-gray-400 hidden sm:block">T{seg.departure.terminal}</p>}
         </div>
 
-        {/* Middle — duration + line */}
         <div className="flex flex-col items-center flex-1 min-w-0 px-1 sm:px-3">
           <div className="flex items-center space-x-1 text-gray-400 mb-1">
             <Clock className="w-2.5 h-2.5 flex-shrink-0" />
@@ -96,15 +85,12 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
           )}
         </div>
 
-        {/* Arrival */}
         <div className="text-right flex-shrink-0">
           <p className="text-lg sm:text-2xl font-black text-gray-900 tracking-tight leading-none">
             {formatTime(lastSeg.arrival.at)}
           </p>
           <p className="text-xs font-bold text-gray-600 mt-0.5">{lastSeg.arrival.iataCode}</p>
-          {lastSeg.arrival.terminal && (
-            <p className="text-xs text-gray-400 hidden sm:block">T{lastSeg.arrival.terminal}</p>
-          )}
+          {lastSeg.arrival.terminal && <p className="text-xs text-gray-400 hidden sm:block">T{lastSeg.arrival.terminal}</p>}
         </div>
       </div>
     </div>
@@ -113,11 +99,32 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
 
 const FlightsPage = () => {
   const navigate = useNavigate();
-  const { searchResults, searchParams, setSelectedFlight } = useFlightStore();
+  const { searchResults, searchParams, setSelectedFlight, setSearchResults, setSearchParams } = useFlightStore();
   const [sortBy, setSortBy] = useState('price');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ stops: 'all', maxPrice: '', airlines: [] });
   const [expandedFlight, setExpandedFlight] = useState(null);
+
+  // Persist search results in sessionStorage to survive pull-to-refresh
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      sessionStorage.setItem('aerwiz_results', JSON.stringify(searchResults));
+      sessionStorage.setItem('aerwiz_params', JSON.stringify(searchParams));
+    }
+  }, [searchResults, searchParams]);
+
+  useEffect(() => {
+    if (searchResults.length === 0) {
+      const saved = sessionStorage.getItem('aerwiz_results');
+      const savedParams = sessionStorage.getItem('aerwiz_params');
+      if (saved && savedParams) {
+        try {
+          setSearchResults(JSON.parse(saved));
+          setSearchParams(JSON.parse(savedParams));
+        } catch (e) {}
+      }
+    }
+  }, []);
 
   const airlines = useMemo(() => {
     return [...new Set(searchResults.map(f => f.itineraries[0].segments[0].carrierCode))];
@@ -188,7 +195,6 @@ const FlightsPage = () => {
       <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
         <div className="w-full px-3 sm:px-6 py-3 max-w-screen-2xl mx-auto">
           <div className="flex items-center justify-between gap-2">
-            {/* Route summary — truncates gracefully on mobile */}
             <div className="flex items-center gap-1.5 sm:gap-3 text-sm min-w-0 flex-1">
               <span className="font-black text-gray-900 text-sm sm:text-base uppercase tracking-wide whitespace-nowrap">
                 {searchParams.origin}
@@ -219,11 +225,10 @@ const FlightsPage = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="w-full px-3 sm:px-6 py-4 sm:py-6 max-w-screen-2xl mx-auto">
         <div className="flex gap-5">
 
-          {/* Sidebar Filters — desktop only */}
+          {/* Sidebar Filters — desktop */}
           <div className="hidden lg:block w-60 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm p-5 sticky top-20 border border-gray-100">
               <div className="flex items-center justify-between mb-5">
@@ -297,7 +302,6 @@ const FlightsPage = () => {
           {/* Flight List */}
           <div className="flex-1 min-w-0">
 
-            {/* Header row */}
             <div className="flex items-center justify-between mb-3 gap-2">
               <div className="min-w-0">
                 <h1 className="text-base sm:text-lg font-bold text-gray-800">
@@ -308,7 +312,6 @@ const FlightsPage = () => {
                 </p>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
-                {/* Mobile filter button */}
                 <button onClick={() => setShowFilters(!showFilters)}
                   className="lg:hidden flex items-center space-x-1.5 border border-gray-200 bg-white px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:border-blue-400 transition-colors">
                   <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -317,7 +320,6 @@ const FlightsPage = () => {
                     <span className="bg-blue-600 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">{activeFiltersCount}</span>
                   )}
                 </button>
-                {/* Sort */}
                 <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
                   {['price', 'duration', 'departure'].map(s => (
                     <button key={s} onClick={() => setSortBy(s)}
@@ -329,7 +331,6 @@ const FlightsPage = () => {
               </div>
             </div>
 
-            {/* Mobile Filters panel */}
             {showFilters && (
               <div className="lg:hidden bg-white rounded-xl shadow-sm p-4 mb-4 border border-gray-100">
                 <div className="grid grid-cols-2 gap-4">
@@ -370,7 +371,6 @@ const FlightsPage = () => {
               </div>
             )}
 
-            {/* Flight Cards */}
             <div className="space-y-3">
               {filtered.map((flight, index) => {
                 const seg = flight.itineraries[0].segments[0];
@@ -404,11 +404,8 @@ const FlightsPage = () => {
                     )}
 
                     <div className="p-4 sm:p-5">
-
-                      {/* Outbound leg */}
                       <FlightLeg seg={seg} lastSeg={lastSeg} stops={stops} duration={duration} segments={segments} />
 
-                      {/* Return leg */}
                       {isRoundTrip && (
                         <>
                           <div className="border-t border-dashed border-gray-200 my-3 flex items-center">
@@ -418,7 +415,6 @@ const FlightsPage = () => {
                         </>
                       )}
 
-                      {/* Baggage tags */}
                       <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
                         <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full font-medium">
                           {cabin?.replace('_', ' ')}
@@ -446,7 +442,6 @@ const FlightsPage = () => {
                         </button>
                       </div>
 
-                      {/* Expanded details */}
                       {isExpanded && (
                         <div className="mt-4 pt-4 border-t border-gray-100">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -502,7 +497,6 @@ const FlightsPage = () => {
                         </div>
                       )}
 
-                      {/* Price + CTA — responsive, no overflow */}
                       <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 gap-3">
                         <div className="min-w-0">
                           <p className="text-xl sm:text-2xl font-black text-blue-600 tracking-tight leading-none">
@@ -529,7 +523,6 @@ const FlightsPage = () => {
                           )}
                         </div>
                       </div>
-
                     </div>
                   </div>
                 );

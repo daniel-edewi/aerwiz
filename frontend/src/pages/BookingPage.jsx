@@ -220,14 +220,18 @@ const BookingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
+      {/* Header — SVG wordmark logo, no old icon+text */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Plane className="text-white w-4 h-4" />
-            </div>
-            <span className="text-blue-700 text-lg font-bold">Aerwiz</span>
+          <div className="cursor-pointer" onClick={() => navigate('/')}>
+            <svg viewBox="0 0 800 300" height="36" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
+              <text x="400" y="210" textAnchor="middle"
+                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+                fontSize="160" fontWeight="800" letterSpacing="-5">
+                <tspan fill="#1e3a5f">aer</tspan>
+                <tspan fill="#2563eb">wiz</tspan>
+              </text>
+            </svg>
           </div>
           <StepIndicator current={1} />
           <button onClick={() => navigate('/flights')} className="text-xs text-gray-500 hover:text-blue-600 font-medium hidden sm:block">
@@ -268,7 +272,6 @@ const BookingPage = () => {
           {/* LEFT - Form */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* Guest Notice */}
             {!isAuthenticated && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center space-x-3">
                 <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />
@@ -280,7 +283,6 @@ const BookingPage = () => {
               </div>
             )}
 
-            {/* Passengers */}
             {passengers.map((passenger, index) => (
               <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center justify-between">
@@ -301,7 +303,6 @@ const BookingPage = () => {
                 </div>
 
                 <div className="p-5 space-y-4">
-                  {/* Name Row */}
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                     <Field label="Title" required>
                       <select value={passenger.title} onChange={(e) => updatePassenger(index, 'title', e.target.value)} className={inputClass}>
@@ -327,12 +328,12 @@ const BookingPage = () => {
                     <Field label="First Name (as on passport)" required>
                       <input type="text" value={passenger.firstName}
                         onChange={(e) => updatePassenger(index, 'firstName', e.target.value)}
-                        className={inputClass} required placeholder="e.g. Daniel" />
+                        className={inputClass} placeholder="e.g. Daniel" />
                     </Field>
                     <Field label="Last Name (as on passport)" required>
                       <input type="text" value={passenger.lastName}
                         onChange={(e) => updatePassenger(index, 'lastName', e.target.value)}
-                        className={inputClass} required placeholder="e.g. Edewi" />
+                        className={inputClass} placeholder="e.g. Edewi" />
                     </Field>
                   </div>
 
@@ -340,7 +341,7 @@ const BookingPage = () => {
                     <Field label="Date of Birth" required>
                       <input type="date" value={passenger.dateOfBirth}
                         onChange={(e) => updatePassenger(index, 'dateOfBirth', e.target.value)}
-                        className={inputClass} required />
+                        className={inputClass} />
                     </Field>
                     <Field label="Nationality" required>
                       <select value={passenger.nationality}
@@ -367,33 +368,30 @@ const BookingPage = () => {
                   </div>
 
                   {index === 0 && (
-                    <>
-                      <div className="border-t border-gray-100 pt-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <Field label="Email Address" required>
-                            <input type="email" value={passenger.email}
-                              onChange={(e) => updatePassenger(index, 'email', e.target.value)}
-                              className={inputClass} required placeholder="confirmation@email.com" />
-                          </Field>
-                          <Field label="Phone Number" required>
-                            <input type="tel" value={passenger.phone}
-                              onChange={(e) => updatePassenger(index, 'phone', e.target.value)}
-                              className={inputClass} required placeholder="+234 800 000 0000" />
-                          </Field>
-                        </div>
-                        <p className="text-xs text-gray-400 mt-2 flex items-center space-x-1">
-                          <Info className="w-3 h-3" />
-                          <span>Booking confirmation and e-ticket will be sent to this email</span>
-                        </p>
+                    <div className="border-t border-gray-100 pt-4">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Field label="Email Address" required>
+                          <input type="email" value={passenger.email}
+                            onChange={(e) => updatePassenger(index, 'email', e.target.value)}
+                            className={inputClass} placeholder="confirmation@email.com" />
+                        </Field>
+                        <Field label="Phone Number" required>
+                          <input type="tel" value={passenger.phone}
+                            onChange={(e) => updatePassenger(index, 'phone', e.target.value)}
+                            className={inputClass} placeholder="+234 800 000 0000" />
+                        </Field>
                       </div>
-                    </>
+                      <p className="text-xs text-gray-400 mt-2 flex items-center space-x-1">
+                        <Info className="w-3 h-3" />
+                        <span>Booking confirmation and e-ticket will be sent to this email</span>
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
             ))}
 
-            {/* Add Passenger Button */}
             {passengers.length < 6 && (
               <button type="button" onClick={addPassenger}
                 className="w-full flex items-center justify-center space-x-2 border-2 border-dashed border-blue-200 rounded-2xl py-4 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all text-sm font-semibold">
@@ -402,7 +400,6 @@ const BookingPage = () => {
               </button>
             )}
 
-            {/* Seat Selection Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
                 <h2 className="font-bold text-gray-800">Seat Selection</h2>
@@ -435,7 +432,6 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* Promo Code */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center space-x-2">
                 <Tag className="w-4 h-4 text-blue-600" />
@@ -471,7 +467,6 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* Terms & Conditions */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <label className="flex items-start space-x-3 cursor-pointer">
                 <div className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${acceptedTerms ? 'bg-blue-600 border-blue-600' : 'border-gray-300 hover:border-blue-400'}`}
@@ -502,7 +497,6 @@ const BookingPage = () => {
               )}
             </div>
 
-            {/* Submit Button */}
             <button
               onClick={handleBooking}
               disabled={loading || !acceptedTerms}
@@ -530,7 +524,6 @@ const BookingPage = () => {
               </div>
 
               <div className="p-5 space-y-4">
-                {/* Flight Route */}
                 <div className="flex items-center justify-between">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-gray-900">{formatTime(segment.departure.at)}</p>
@@ -560,7 +553,6 @@ const BookingPage = () => {
                   </div>
                 </div>
 
-                {/* Airline */}
                 <div className="flex items-center space-x-3 bg-gray-50 rounded-xl p-3">
                   <img src={`https://pics.avs.io/50/50/${airlineCode}.png`} alt={airlineCode}
                     className="w-10 h-10 rounded-lg object-contain border border-gray-100 bg-white p-1"
@@ -572,22 +564,18 @@ const BookingPage = () => {
                   </div>
                 </div>
 
-                {/* Transit Info */}
                 {stops > 0 && (
                   <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
                     <p className="text-xs font-bold text-orange-700 mb-2">Transit Information</p>
                     {segments.map((seg, i) => (
                       <div key={i} className="text-xs text-gray-600 mb-1">
                         <p className="font-medium">{seg.departure.iataCode} to {seg.arrival.iataCode} · {formatDuration(seg.duration)}</p>
-                        {i < segments.length - 1 && (
-                          <p className="text-orange-500">Layover at {seg.arrival.iataCode}</p>
-                        )}
+                        {i < segments.length - 1 && <p className="text-orange-500">Layover at {seg.arrival.iataCode}</p>}
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Baggage */}
                 <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
                   <p className="text-xs font-bold text-blue-700 mb-2 flex items-center space-x-1">
                     <Luggage className="w-3.5 h-3.5" />
@@ -595,23 +583,18 @@ const BookingPage = () => {
                   </p>
                   <div className="space-y-1 text-xs">
                     <div className="flex items-center space-x-2">
-                      {includedCabinBags ? (
-                        <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">Cabin bag included</span></>
-                      ) : (
-                        <><span className="text-gray-400">-</span><span className="text-gray-400">Cabin bag: check with airline</span></>
-                      )}
+                      {includedCabinBags
+                        ? <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">Cabin bag included</span></>
+                        : <><span className="text-gray-400">-</span><span className="text-gray-400">Cabin bag: check with airline</span></>}
                     </div>
                     <div className="flex items-center space-x-2">
-                      {includedBags ? (
-                        <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''} included{includedBags.weight ? ` (${includedBags.weight}${includedBags.weightUnit})` : ''}</span></>
-                      ) : (
-                        <><span className="text-orange-400 font-bold">x</span><span className="text-orange-600">No checked bag included</span></>
-                      )}
+                      {includedBags
+                        ? <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''} included{includedBags.weight ? ` (${includedBags.weight}${includedBags.weightUnit})` : ''}</span></>
+                        : <><span className="text-orange-400 font-bold">x</span><span className="text-orange-600">No checked bag included</span></>}
                     </div>
                   </div>
                 </div>
 
-                {/* Cancellation */}
                 <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-100">
                   <p className="text-xs font-bold text-yellow-700 flex items-center space-x-1 mb-1">
                     <AlertCircle className="w-3.5 h-3.5" />
@@ -620,7 +603,6 @@ const BookingPage = () => {
                   <p className="text-xs text-gray-500">Fees vary by fare type. Refunds processed within 7-14 business days.</p>
                 </div>
 
-                {/* Miles Program */}
                 {milesProgram && (
                   <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
                     <p className="text-xs font-bold text-purple-700 flex items-center space-x-1">
@@ -633,7 +615,6 @@ const BookingPage = () => {
                   </div>
                 )}
 
-                {/* Selected Seat */}
                 {selectedSeat && (
                   <div className="bg-green-50 rounded-xl p-3 border border-green-100">
                     <p className="text-xs font-bold text-green-700 flex items-center space-x-1">
@@ -644,7 +625,6 @@ const BookingPage = () => {
                   </div>
                 )}
 
-                {/* Price Breakdown */}
                 <div className="border-t border-gray-100 pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Base fare × {passengers.length}</span>
@@ -666,7 +646,6 @@ const BookingPage = () => {
                   </div>
                 </div>
 
-                {/* Toggle Flight Details */}
                 <button onClick={() => setShowFlightDetails(!showFlightDetails)}
                   className="w-full flex items-center justify-center space-x-1 text-xs text-blue-600 hover:text-blue-700 font-medium py-1">
                   <span>{showFlightDetails ? 'Hide' : 'Show'} full flight details</span>
