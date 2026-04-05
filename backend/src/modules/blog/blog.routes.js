@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, adminOnly } = require('../../middleware/auth');
 
 // GET /api/blog — public, all published posts
 router.get('/', async (req, res) => {
