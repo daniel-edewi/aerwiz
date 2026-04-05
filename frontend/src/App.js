@@ -14,6 +14,11 @@ import SeatSelectionPage from './pages/SeatSelectionPage';
 import AlertsPage from './pages/AlertsPage';
 import BaggagePage from './pages/BaggagePage';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import CareersPage from './pages/CareersPage';
+import BlogPage from './pages/BlogPage';
+import AffiliatePage from './pages/AffiliatePage';
 
 function App() {
   return (
@@ -33,6 +38,11 @@ function App() {
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/baggage" element={<BaggagePage />} />
           <Route path="/payment/verify" element={<PaymentVerifyPage />} />
+          <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+<Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+<Route path="/careers" element={<Layout><CareersPage /></Layout>} />
+<Route path="/blog" element={<Layout><BlogPage /></Layout>} />
+<Route path="/affiliate" element={<Layout><AffiliatePage /></Layout>} />
         </Routes>
       </Layout>
     </Router>

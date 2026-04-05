@@ -48,6 +48,9 @@ app.use('/api/payments', require('./modules/payments/payments.routes'));
 app.use('/api/alerts', require('./modules/alerts/alerts.routes'));
 app.use('/api/admin', require('./modules/admin/admin.routes'));
 app.use('/api/promo', require('./modules/promo/promo.routes'));
+app.use('/api/contact', require('./modules/contact/contact.routes'));
+app.use('/api/blog', require('./modules/blog/blog.routes'));
+app.use('/api/affiliate', require('./modules/affiliate/affiliate.routes'));
 
 // Health check
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));

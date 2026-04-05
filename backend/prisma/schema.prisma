@@ -189,4 +189,21 @@ enum CabinClass {
 enum TripType {
   ONE_WAY
   ROUND_TRIP
+}// Add this model to your existing schema.prisma file
+// Located at: ~/Documents/aerwiz/backend/prisma/schema.prisma
+
+model BlogPost {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique
+  title       String
+  excerpt     String    @default("")
+  content     String    @db.Text
+  category    String    @default("General")
+  image       String    @default("")
+  readTime    String    @default("5 min read")
+  author      String    @default("Aerwiz Team")
+  published   Boolean   @default(true)
+  publishedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
