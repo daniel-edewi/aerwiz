@@ -16,21 +16,21 @@ const Footer = () => {
               className="mb-4 cursor-pointer inline-block"
               onClick={() => navigate('/')}
             >
-              {/* White version of the logo for dark background */}
+              {/* Inline SVG — white/light-blue version for dark footer background */}
               <svg
                 viewBox="0 0 800 300"
-                height="36"
+                height="48"
                 xmlns="http://www.w3.org/2000/svg"
                 aria-label="Aerwiz"
               >
                 <text
                   x="400"
                   y="200"
-                  text-anchor="middle"
-                  font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-                  font-size="160"
-                  font-weight="800"
-                  letter-spacing="-5"
+                  textAnchor="middle"
+                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+                  fontSize="160"
+                  fontWeight="800"
+                  letterSpacing="-5"
                 >
                   <tspan fill="white">aer</tspan>
                   <tspan fill="#93c5fd">wiz</tspan>
@@ -57,11 +57,11 @@ const Footer = () => {
             <h4 className="font-bold text-white mb-4">Services</h4>
             <ul className="space-y-2 text-blue-300 text-sm">
               {[
-                { label: 'Search Flights', action: () => navigate('/') },
-                { label: 'Manage Booking', action: () => { navigate('/'); setTimeout(() => { const el = document.getElementById('manage-booking-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 300); }},
-                { label: 'Price Alerts', action: () => navigate('/alerts') },
+                { label: 'Search Flights',     action: () => navigate('/') },
+                { label: 'Manage Booking',     action: () => { navigate('/'); setTimeout(() => { const el = document.getElementById('manage-booking-section'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 300); }},
+                { label: 'Price Alerts',       action: () => navigate('/alerts') },
                 { label: 'Baggage Calculator', action: () => navigate('/baggage') },
-                { label: 'Seat Selection', action: () => navigate('/') },
+                { label: 'Seat Selection',     action: () => navigate('/') },
               ].map(item => (
                 <li
                   key={item.label}

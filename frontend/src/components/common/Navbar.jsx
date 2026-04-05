@@ -47,15 +47,24 @@ const Navbar = () => {
   return (
     <div className="sticky top-0 z-50">
 
-      {/* Announcement Bar */}
-      <div className="bg-blue-700 text-white py-2 overflow-hidden">
-        <div className="flex whitespace-nowrap animate-marquee">
-          {[...Array(3)].map((_, i) => (
-            <span key={i} className="inline-flex items-center gap-10 px-6 text-xs sm:text-sm font-medium tracking-wide">
+      {/* Announcement Bar
+          — max-w + mx-auto on the inner scrolling div keeps the marquee
+            content from ever exceeding the viewport width, which is what
+            causes the mobile horizontal wiggle                           */}
+      <div className="bg-blue-700 text-white py-2" style={{ overflow: 'hidden', maxWidth: '100vw' }}>
+        <div
+          className="flex whitespace-nowrap animate-marquee"
+          style={{ willChange: 'transform' }}
+        >
+          {[...Array(4)].map((_, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-10 px-8 text-xs sm:text-sm font-medium tracking-wide"
+            >
               {announcements.map((msg, j) => (
-                <span key={j} className="flex items-center gap-2">
+                <span key={j} className="inline-flex items-center gap-2 flex-shrink-0">
                   <span className="w-1 h-1 rounded-full bg-blue-300 flex-shrink-0"></span>
-                  <span>{msg}</span>
+                  <span className="flex-shrink-0">{msg}</span>
                 </span>
               ))}
             </span>
@@ -68,7 +77,7 @@ const Navbar = () => {
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
 
-            {/* Logo image */}
+            {/* Logo — h-10 on mobile, h-12 on desktop (≈2× bigger than before) */}
             <div
               className="flex items-center cursor-pointer flex-shrink-0"
               onClick={() => navigate('/')}
@@ -76,7 +85,7 @@ const Navbar = () => {
               <img
                 src="/aerwiz-logo-03.svg"
                 alt="Aerwiz"
-                className="h-8 w-auto"
+                className="h-10 sm:h-12 w-auto"
               />
             </div>
 
