@@ -223,16 +223,6 @@ const BookingPage = () => {
       {/* Header — SVG wordmark logo, no old icon+text */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="cursor-pointer" onClick={() => navigate('/')}>
-            <svg viewBox="0 0 800 300" height="36" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
-              <text x="400" y="210" textAnchor="middle"
-                fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-                fontSize="160" fontWeight="800" letterSpacing="-5">
-                <tspan fill="#1e3a5f">aer</tspan>
-                <tspan fill="#2563eb">wiz</tspan>
-              </text>
-            </svg>
-          </div>
           <StepIndicator current={1} />
           <button onClick={() => navigate('/flights')} className="text-xs text-gray-500 hover:text-blue-600 font-medium hidden sm:block">
             Back to results
@@ -328,12 +318,12 @@ const BookingPage = () => {
                     <Field label="First Name (as on passport)" required>
                       <input type="text" value={passenger.firstName}
                         onChange={(e) => updatePassenger(index, 'firstName', e.target.value)}
-                        className={inputClass} placeholder="e.g. Daniel" />
+                        className={inputClass} placeholder="e.g. John" />
                     </Field>
                     <Field label="Last Name (as on passport)" required>
                       <input type="text" value={passenger.lastName}
                         onChange={(e) => updatePassenger(index, 'lastName', e.target.value)}
-                        className={inputClass} placeholder="e.g. Edewi" />
+                        className={inputClass} placeholder="e.g. Smith" />
                     </Field>
                   </div>
 
