@@ -38,11 +38,11 @@ function App() {
           <Route path="/alerts" element={<AlertsPage />} />
           <Route path="/baggage" element={<BaggagePage />} />
           <Route path="/payment/verify" element={<PaymentVerifyPage />} />
-          <Route path="/about" element={<Layout><AboutPage /></Layout>} />
-<Route path="/contact" element={<Layout><ContactPage /></Layout>} />
-<Route path="/careers" element={<Layout><CareersPage /></Layout>} />
-<Route path="/blog" element={<Layout><BlogPage /></Layout>} />
-<Route path="/affiliate" element={<Layout><AffiliatePage /></Layout>} />
+          <Route path="/about" element={<AboutPage />} />
+<Route path="/contact" element={<ContactPage />} />
+<Route path="/careers" element={<CareersPage />} />
+<Route path="/blog" element={<BlogPage />} />
+<Route path="/affiliate" element={<AffiliatePage />} />
         </Routes>
       </Layout>
     </Router>
