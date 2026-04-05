@@ -252,7 +252,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="bg-white">
+    <div className="bg-white overflow-x-hidden w-full">
 
       {/* ══════════════════════════════════════
           HERO
