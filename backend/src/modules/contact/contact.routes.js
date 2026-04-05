@@ -3,7 +3,10 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  family: 4,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -19,7 +22,7 @@ router.post('/', async (req, res) => {
   try {
     await transporter.sendMail({
       from: `"Aerwiz Contact" <${process.env.EMAIL_USER}>`,
-      to: 'support@aerwiz.com',
+      to: process.env.EMAIL_USER,
       replyTo: email,
       subject: `[Aerwiz Contact] ${subject || 'New message'} — from ${name}`,
       html: `
