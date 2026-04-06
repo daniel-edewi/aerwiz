@@ -118,7 +118,7 @@ const LoginPage = () => {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Password</label>
-                <span className="text-xs text-blue-600 hover:underline cursor-pointer font-medium">Forgot password?</span>
+                <span className="text-xs text-blue-600 hover:underline cursor-pointer font-medium" onClick={() => navigate('/forgot-password')}>Forgot password?</span>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
