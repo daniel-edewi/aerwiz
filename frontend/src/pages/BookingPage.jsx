@@ -107,12 +107,163 @@ const StepIndicator = ({ current }) => {
   );
 };
 
+const FlightSummary = ({ segment, lastSegment, segments, stops, duration, airlineCode, cabin, includedBags, includedCabinBags, milesProgram, selectedSeat, selectedFlight, passengers, promo, grandTotal, finalAmount, showFlightDetails, setShowFlightDetails }) => (
+  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-blue-700 text-white px-5 py-4">
+      <h2 className="font-bold text-base">Flight Summary</h2>
+      <p className="text-blue-200 text-xs mt-0.5">Review your trip details</p>
+    </div>
+    <div className="p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-center">
+          <p className="text-2xl font-bold text-gray-900">{formatTime(segment.departure.at)}</p>
+          <p className="text-sm font-bold text-gray-700">{segment.departure.iataCode}</p>
+          {segment.departure.terminal && <p className="text-xs text-gray-400">T{segment.departure.terminal}</p>}
+          <p className="text-xs text-gray-400">{formatDate(segment.departure.at)}</p>
+        </div>
+        <div className="flex flex-col items-center flex-1 px-3">
+          <div className="flex items-center space-x-1 text-gray-400 text-xs mb-1">
+            <Clock className="w-3 h-3" />
+            <span>{formatDuration(duration)}</span>
+          </div>
+          <div className="flex items-center w-full">
+            <div className="h-px flex-1 bg-gray-200"></div>
+            <Plane className="w-4 h-4 text-blue-500 mx-1" />
+            <div className="h-px flex-1 bg-gray-200"></div>
+          </div>
+          <p className={`text-xs mt-1 font-semibold ${stops === 0 ? 'text-green-600' : 'text-orange-500'}`}>
+            {stops === 0 ? 'Direct' : `${stops} stop${stops > 1 ? 's' : ''}`}
+          </p>
+        </div>
+        <div className="text-center">
+          <p className="text-2xl font-bold text-gray-900">{formatTime(lastSegment.arrival.at)}</p>
+          <p className="text-sm font-bold text-gray-700">{lastSegment.arrival.iataCode}</p>
+          {lastSegment.arrival.terminal && <p className="text-xs text-gray-400">T{lastSegment.arrival.terminal}</p>}
+          <p className="text-xs text-gray-400">{formatDate(lastSegment.arrival.at)}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-3 bg-gray-50 rounded-xl p-3">
+        <img src={`https://pics.avs.io/50/50/${airlineCode}.png`} alt={airlineCode}
+          className="w-10 h-10 rounded-lg object-contain border border-gray-100 bg-white p-1"
+          onError={(e) => { e.target.style.display = 'none'; }} />
+        <div>
+          <p className="text-sm font-bold text-gray-800">{AIRLINE_NAMES[airlineCode] || airlineCode}</p>
+          <p className="text-xs text-gray-400">{segment.carrierCode}{segment.number} · {cabin}</p>
+          {segment.aircraft?.code && <p className="text-xs text-gray-400">Aircraft: {segment.aircraft.code}</p>}
+        </div>
+      </div>
+
+      {stops > 0 && (
+        <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+          <p className="text-xs font-bold text-orange-700 mb-2">Transit Information</p>
+          {segments.map((seg, i) => (
+            <div key={i} className="text-xs text-gray-600 mb-1">
+              <p className="font-medium">{seg.departure.iataCode} to {seg.arrival.iataCode} · {formatDuration(seg.duration)}</p>
+              {i < segments.length - 1 && <p className="text-orange-500">Layover at {seg.arrival.iataCode}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+        <p className="text-xs font-bold text-blue-700 mb-2 flex items-center space-x-1">
+          <Luggage className="w-3.5 h-3.5" />
+          <span>Baggage Allowance</span>
+        </p>
+        <div className="space-y-1 text-xs">
+          <div className="flex items-center space-x-2">
+            {includedCabinBags
+              ? <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">Cabin bag included</span></>
+              : <><span className="text-gray-400">-</span><span className="text-gray-400">Cabin bag: check with airline</span></>}
+          </div>
+          <div className="flex items-center space-x-2">
+            {includedBags
+              ? <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''} included{includedBags.weight ? ` (${includedBags.weight}${includedBags.weightUnit})` : ''}</span></>
+              : <><span className="text-orange-400 font-bold">x</span><span className="text-orange-600">No checked bag included</span></>}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-100">
+        <p className="text-xs font-bold text-yellow-700 flex items-center space-x-1 mb-1">
+          <AlertCircle className="w-3.5 h-3.5" />
+          <span>Cancellation Policy</span>
+        </p>
+        <p className="text-xs text-gray-500">Fees vary by fare type. Refunds processed within 7-14 business days.</p>
+      </div>
+
+      {milesProgram && (
+        <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+          <p className="text-xs font-bold text-purple-700 flex items-center space-x-1">
+            <Award className="w-3.5 h-3.5" />
+            <span>Earn Miles</span>
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Eligible for <a href={milesProgram.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 underline font-medium">{milesProgram.program}</a>
+          </p>
+        </div>
+      )}
+
+      {selectedSeat && (
+        <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+          <p className="text-xs font-bold text-green-700 flex items-center space-x-1">
+            <Check className="w-3.5 h-3.5" />
+            <span>Selected Seat</span>
+          </p>
+          <p className="text-xs text-gray-600 mt-1">Seat <span className="font-bold">{selectedSeat.id}</span> {selectedSeat.extraLegroom ? '· Extra Legroom' : ''}</p>
+        </div>
+      )}
+
+      <div className="border-t border-gray-100 pt-4 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">Base fare × {passengers.length}</span>
+          <span className="text-gray-700">{formatPrice(parseFloat(selectedFlight.price.base) * passengers.length)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-500">Taxes & fees</span>
+          <span className="text-gray-700">{formatPrice(grandTotal - parseFloat(selectedFlight.price.base))}</span>
+        </div>
+        {promo && (
+          <div className="flex justify-between text-sm text-green-600 font-medium">
+            <span>{promo.code}</span>
+            <span>-{formatPrice(promo.discount)}</span>
+          </div>
+        )}
+        <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
+          <span className="text-gray-800">Total</span>
+          <span className="text-blue-600 text-lg">{formatPrice(finalAmount)}</span>
+        </div>
+      </div>
+
+      <button onClick={() => setShowFlightDetails(!showFlightDetails)}
+        className="w-full flex items-center justify-center space-x-1 text-xs text-blue-600 hover:text-blue-700 font-medium py-1">
+        <span>{showFlightDetails ? 'Hide' : 'Show'} full flight details</span>
+        {showFlightDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+
+      {showFlightDetails && (
+        <div className="border-t pt-3 space-y-2">
+          {segments.map((seg, i) => (
+            <div key={i} className="text-xs bg-gray-50 rounded-lg p-3 space-y-1">
+              <p className="font-bold text-gray-700">{seg.departure.iataCode} to {seg.arrival.iataCode}</p>
+              <p className="text-gray-500">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode} · {seg.carrierCode}{seg.number}</p>
+              <p className="text-gray-500">Dep: {formatTime(seg.departure.at)}{seg.departure.terminal ? ` · T${seg.departure.terminal}` : ''}</p>
+              <p className="text-gray-500">Arr: {formatTime(seg.arrival.at)}{seg.arrival.terminal ? ` · T${seg.arrival.terminal}` : ''}</p>
+              <p className="text-gray-500">Duration: {formatDuration(seg.duration)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
 const BookingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedFlight, searchParams, setSelectedFlight } = useFlightStore();
 
-  // Persist selected flight across refresh
   React.useEffect(() => {
     if (selectedFlight) {
       sessionStorage.setItem('aerwiz_selected_flight', JSON.stringify(selectedFlight));
@@ -127,6 +278,7 @@ const BookingPage = () => {
       }
     }
   }, []);
+
   const { isAuthenticated, token } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [promo, setPromo] = useState(null);
@@ -187,6 +339,13 @@ const BookingPage = () => {
   const finalAmount = promo ? promo.finalAmount : grandTotal;
   const isRoundTrip = selectedFlight.itineraries.length > 1;
 
+  const summaryProps = {
+    segment, lastSegment, segments, stops, duration, airlineCode,
+    cabin, includedBags, includedCabinBags, milesProgram, selectedSeat,
+    selectedFlight, passengers, promo, grandTotal, finalAmount,
+    showFlightDetails, setShowFlightDetails
+  };
+
   const applyPromo = async () => {
     if (!promoCode.trim()) return;
     setPromoLoading(true);
@@ -236,7 +395,7 @@ const BookingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header — SVG wordmark logo, no old icon+text */}
+      {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <StepIndicator current={1} />
@@ -277,6 +436,11 @@ const BookingPage = () => {
 
           {/* LEFT - Form */}
           <div className="lg:col-span-2 space-y-5">
+
+            {/* Flight Summary — mobile only */}
+            <div className="lg:hidden">
+              <FlightSummary {...summaryProps} />
+            </div>
 
             {!isAuthenticated && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center space-x-3">
@@ -406,6 +570,7 @@ const BookingPage = () => {
               </button>
             )}
 
+            {/* Seat Selection */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-100 px-5 py-3">
                 <h2 className="font-bold text-gray-800">Seat Selection</h2>
@@ -438,6 +603,7 @@ const BookingPage = () => {
               </div>
             </div>
 
+            {/* Promo Code — FIXED: stacks on mobile */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center space-x-2">
                 <Tag className="w-4 h-4 text-blue-600" />
@@ -454,18 +620,24 @@ const BookingPage = () => {
                       </div>
                     </div>
                     <button type="button" onClick={() => { setPromo(null); setPromoCode(''); }}
-                      className="text-red-400 hover:text-red-600 text-xs font-semibold ml-3">Remove</button>
+                      className="text-red-400 hover:text-red-600 text-xs font-semibold ml-3 flex-shrink-0">Remove</button>
                   </div>
                 ) : (
-                  <div className="flex space-x-2">
-                    <input type="text" value={promoCode}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), applyPromo())}
                       placeholder="Enter promo code (e.g. AERWIZ20)"
-                      className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-widest" />
-                    <button type="button" onClick={applyPromo}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-widest"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyPromo}
                       disabled={promoLoading || !promoCode.trim()}
-                      className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-blue-700 transition-colors">
+                      className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
                       {promoLoading ? '...' : 'Apply'}
                     </button>
                   </div>
@@ -473,6 +645,7 @@ const BookingPage = () => {
               </div>
             </div>
 
+            {/* Terms */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <label className="flex items-start space-x-3 cursor-pointer">
                 <div className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${acceptedTerms ? 'bg-blue-600 border-blue-600' : 'border-gray-300 hover:border-blue-400'}`}
@@ -503,6 +676,7 @@ const BookingPage = () => {
               )}
             </div>
 
+            {/* Submit */}
             <button
               onClick={handleBooking}
               disabled={loading || !acceptedTerms}
@@ -521,159 +695,13 @@ const BookingPage = () => {
             </p>
           </div>
 
-          {/* RIGHT - Flight Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 sticky top-20 overflow-hidden">
-              <div className="bg-blue-700 text-white px-5 py-4">
-                <h2 className="font-bold text-base">Flight Summary</h2>
-                <p className="text-blue-200 text-xs mt-0.5">Review your trip details</p>
-              </div>
-
-              <div className="p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">{formatTime(segment.departure.at)}</p>
-                    <p className="text-sm font-bold text-gray-700">{segment.departure.iataCode}</p>
-                    {segment.departure.terminal && <p className="text-xs text-gray-400">T{segment.departure.terminal}</p>}
-                    <p className="text-xs text-gray-400">{formatDate(segment.departure.at)}</p>
-                  </div>
-                  <div className="flex flex-col items-center flex-1 px-3">
-                    <div className="flex items-center space-x-1 text-gray-400 text-xs mb-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{formatDuration(duration)}</span>
-                    </div>
-                    <div className="flex items-center w-full">
-                      <div className="h-px flex-1 bg-gray-200"></div>
-                      <Plane className="w-4 h-4 text-blue-500 mx-1" />
-                      <div className="h-px flex-1 bg-gray-200"></div>
-                    </div>
-                    <p className={`text-xs mt-1 font-semibold ${stops === 0 ? 'text-green-600' : 'text-orange-500'}`}>
-                      {stops === 0 ? 'Direct' : `${stops} stop${stops > 1 ? 's' : ''}`}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900">{formatTime(lastSegment.arrival.at)}</p>
-                    <p className="text-sm font-bold text-gray-700">{lastSegment.arrival.iataCode}</p>
-                    {lastSegment.arrival.terminal && <p className="text-xs text-gray-400">T{lastSegment.arrival.terminal}</p>}
-                    <p className="text-xs text-gray-400">{formatDate(lastSegment.arrival.at)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3 bg-gray-50 rounded-xl p-3">
-                  <img src={`https://pics.avs.io/50/50/${airlineCode}.png`} alt={airlineCode}
-                    className="w-10 h-10 rounded-lg object-contain border border-gray-100 bg-white p-1"
-                    onError={(e) => { e.target.style.display = 'none'; }} />
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">{AIRLINE_NAMES[airlineCode] || airlineCode}</p>
-                    <p className="text-xs text-gray-400">{segment.carrierCode}{segment.number} · {cabin}</p>
-                    {segment.aircraft?.code && <p className="text-xs text-gray-400">Aircraft: {segment.aircraft.code}</p>}
-                  </div>
-                </div>
-
-                {stops > 0 && (
-                  <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
-                    <p className="text-xs font-bold text-orange-700 mb-2">Transit Information</p>
-                    {segments.map((seg, i) => (
-                      <div key={i} className="text-xs text-gray-600 mb-1">
-                        <p className="font-medium">{seg.departure.iataCode} to {seg.arrival.iataCode} · {formatDuration(seg.duration)}</p>
-                        {i < segments.length - 1 && <p className="text-orange-500">Layover at {seg.arrival.iataCode}</p>}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
-                  <p className="text-xs font-bold text-blue-700 mb-2 flex items-center space-x-1">
-                    <Luggage className="w-3.5 h-3.5" />
-                    <span>Baggage Allowance</span>
-                  </p>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex items-center space-x-2">
-                      {includedCabinBags
-                        ? <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">Cabin bag included</span></>
-                        : <><span className="text-gray-400">-</span><span className="text-gray-400">Cabin bag: check with airline</span></>}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {includedBags
-                        ? <><span className="text-green-500 font-bold">+</span><span className="text-gray-600">{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''} included{includedBags.weight ? ` (${includedBags.weight}${includedBags.weightUnit})` : ''}</span></>
-                        : <><span className="text-orange-400 font-bold">x</span><span className="text-orange-600">No checked bag included</span></>}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-100">
-                  <p className="text-xs font-bold text-yellow-700 flex items-center space-x-1 mb-1">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    <span>Cancellation Policy</span>
-                  </p>
-                  <p className="text-xs text-gray-500">Fees vary by fare type. Refunds processed within 7-14 business days.</p>
-                </div>
-
-                {milesProgram && (
-                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
-                    <p className="text-xs font-bold text-purple-700 flex items-center space-x-1">
-                      <Award className="w-3.5 h-3.5" />
-                      <span>Earn Miles</span>
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Eligible for <a href={milesProgram.url} target="_blank" rel="noopener noreferrer" className="text-purple-600 underline font-medium">{milesProgram.program}</a>
-                    </p>
-                  </div>
-                )}
-
-                {selectedSeat && (
-                  <div className="bg-green-50 rounded-xl p-3 border border-green-100">
-                    <p className="text-xs font-bold text-green-700 flex items-center space-x-1">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Selected Seat</span>
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">Seat <span className="font-bold">{selectedSeat.id}</span> {selectedSeat.extraLegroom ? '· Extra Legroom' : ''}</p>
-                  </div>
-                )}
-
-                <div className="border-t border-gray-100 pt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Base fare × {passengers.length}</span>
-                    <span className="text-gray-700">{formatPrice(parseFloat(selectedFlight.price.base) * passengers.length)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Taxes & fees</span>
-                    <span className="text-gray-700">{formatPrice(grandTotal - parseFloat(selectedFlight.price.base))}</span>
-                  </div>
-                  {promo && (
-                    <div className="flex justify-between text-sm text-green-600 font-medium">
-                      <span>{promo.code}</span>
-                      <span>-{formatPrice(promo.discount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-base border-t pt-2 mt-2">
-                    <span className="text-gray-800">Total</span>
-                    <span className="text-blue-600 text-lg">{formatPrice(finalAmount)}</span>
-                  </div>
-                </div>
-
-                <button onClick={() => setShowFlightDetails(!showFlightDetails)}
-                  className="w-full flex items-center justify-center space-x-1 text-xs text-blue-600 hover:text-blue-700 font-medium py-1">
-                  <span>{showFlightDetails ? 'Hide' : 'Show'} full flight details</span>
-                  {showFlightDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                </button>
-
-                {showFlightDetails && (
-                  <div className="border-t pt-3 space-y-2">
-                    {segments.map((seg, i) => (
-                      <div key={i} className="text-xs bg-gray-50 rounded-lg p-3 space-y-1">
-                        <p className="font-bold text-gray-700">{seg.departure.iataCode} to {seg.arrival.iataCode}</p>
-                        <p className="text-gray-500">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode} · {seg.carrierCode}{seg.number}</p>
-                        <p className="text-gray-500">Dep: {formatTime(seg.departure.at)}{seg.departure.terminal ? ` · T${seg.departure.terminal}` : ''}</p>
-                        <p className="text-gray-500">Arr: {formatTime(seg.arrival.at)}{seg.arrival.terminal ? ` · T${seg.arrival.terminal}` : ''}</p>
-                        <p className="text-gray-500">Duration: {formatDuration(seg.duration)}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+          {/* RIGHT - Flight Summary desktop only */}
+          <div className="lg:col-span-1 hidden lg:block">
+            <div className="sticky top-20">
+              <FlightSummary {...summaryProps} />
             </div>
           </div>
+
         </div>
       </div>
     </div>
