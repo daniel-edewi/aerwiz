@@ -110,7 +110,7 @@ const forgotPassword = async (req, res) => {
 
     res.json({ success: true, message: 'If that email exists, a reset link has been sent' });
   } catch (err) {
-    console.error('Forgot password error:', err);
+    console.error('Forgot password error:', JSON.stringify(err));
     res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 };
