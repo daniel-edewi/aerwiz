@@ -6,7 +6,7 @@ const { Resend } = require('resend');
 const { validationResult } = require('express-validator');
 
 const prisma = new PrismaClient();
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
 
@@ -70,8 +70,7 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL || 'https://aerwiz.com'}/reset-password?token=${token}`;
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const emailResult = await resend.emails.send({
+    await resend.emails.send({
       from: 'Aerwiz <noreply@aerwiz.com>',
       to: email,
       subject: 'Reset your Aerwiz password',
@@ -110,7 +109,7 @@ const forgotPassword = async (req, res) => {
 
     res.json({ success: true, message: 'If that email exists, a reset link has been sent' });
   } catch (err) {
-    console.error('Forgot password error:', JSON.stringify(err));
+    console.error('Forgot password error:', err);
     res.status(500).json({ success: false, message: 'Failed to send reset email' });
   }
 };
