@@ -94,3 +94,11 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+// Temporary debug route — remove after testing
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    hasResendKey: !!process.env.RESEND_API_KEY,
+    resendKeyPrefix: process.env.RESEND_API_KEY ? process.env.RESEND_API_KEY.substring(0, 8) : 'NOT SET',
+    nodeEnv: process.env.NODE_ENV
+  });
+});
