@@ -27,7 +27,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const response = await authAPI.login(form);
-      const { user, accessToken } = response.data.data;
+      const { user, token: accessToken } = response.data.data;
       login(user, accessToken);
       toast.success(`Welcome back, ${user.firstName}!`);
       navigate('/');

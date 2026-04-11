@@ -24,7 +24,7 @@ const AdminLoginPage = () => {
     setLoading(true);
     try {
       const response = await authAPI.login(form);
-      const { user: loggedInUser, accessToken } = response.data.data;
+      const { user: loggedInUser, token: accessToken } = response.data.data;
 
       if (loggedInUser.role !== 'ADMIN') {
         toast.error('Access denied. Admin accounts only.');
