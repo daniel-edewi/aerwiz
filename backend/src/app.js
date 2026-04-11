@@ -74,3 +74,32 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+app.get('/api/test-brevo-email', (req, res) => {
+  const https = require('https');
+  const body = JSON.stringify({
+    sender: { name: 'Aerwiz', email: 'noreply@aerwiz.com' },
+    to: [{ email: 'daniel.edewi90@gmail.com' }],
+    subject: 'Test from Railway',
+    htmlContent: '<p>Test email from Railway via Brevo</p>'
+  });
+  const options = {
+    hostname: 'api.brevo.com',
+    path: '/v3/smtp/email',
+    method: 'POST',
+    family: 4,
+    headers: {
+      'api-key': process.env.BREVO_API_KEY,
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body)
+    }
+  };
+  const req2 = https.request(options, (r) => {
+    let data = '';
+    r.on('data', chunk => data += chunk);
+    r.on('end', () => res.json({ success: true, status: r.statusCode, body: data }));
+  });
+  req2.on('error', (e) => res.json({ success: false, error: e.message }));
+  req2.setTimeout(8000, () => { req2.destroy(); res.json({ success: false, error: 'timeout' }); });
+  req2.write(body);
+  req2.end();
+});
