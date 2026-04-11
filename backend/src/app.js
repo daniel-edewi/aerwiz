@@ -73,7 +73,7 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ success: false, message: err.message || 'Internal server error' });
 });
 
-module.exports = app;
+
 app.get('/api/test-brevo-email', (req, res) => {
   const https = require('https');
   const body = JSON.stringify({
@@ -103,3 +103,4 @@ app.get('/api/test-brevo-email', (req, res) => {
   req2.write(body);
   req2.end();
 });
+module.exports = app;
