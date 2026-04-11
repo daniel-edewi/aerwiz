@@ -40,6 +40,8 @@ app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 
 app.get('/', (req, res) => res.json({ success: true, message: '✈️ Welcome to Aerwiz API', version: '1.0.0' }));
 
+app.get('/brevo-test', (req, res) => res.json({ test: 'works', brevo: !!process.env.BREVO_API_KEY }));
+
 app.get('/api/debug-env', (req, res) => {
   res.json({
     hasResendKey: !!process.env.RESEND_API_KEY,
