@@ -17,7 +17,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, message: 'Too many requests' });
+const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000, message: 'Too many requests' });
 app.use('/api', limiter);
 
 app.use(express.json());
