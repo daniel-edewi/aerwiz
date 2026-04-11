@@ -90,3 +90,14 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
+app.get('/api/test-outbound', async (req, res) => {
+  const https = require('https');
+  const options = { hostname: 'api.brevo.com', path: '/v3/account', method: 'GET', family: 4, headers: { 'api-key': process.env.BREVO_API_KEY } };
+  const req2 = https.request(options, (r) => {
+    res.json({ success: true, status: r.statusCode });
+  });
+  req2.on('error', (e) => res.json({ success: false, error: e.message }));
+  req2.setTimeout(5000, () => { req2.destroy(); res.json({ success: false, error: 'timeout' }); });
+  req2.end();
+});
