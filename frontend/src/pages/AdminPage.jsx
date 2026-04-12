@@ -11,7 +11,7 @@ import {
   Plane, Users, CreditCard, TrendingUp, Bell, BellRing,
   Shield, ShieldCheck, Search, RefreshCw, Clock, X,
   ArrowUpRight, ArrowDownRight, Calendar, MapPin, Trophy, DollarSign, BarChart2,
-  Tag, Plus, Trash2, ToggleLeft, ToggleRight, Edit2, FileText, Eye, EyeOff, Save, ChevronDown, ChevronUp, Lock, UserX
+  Tag, Plus, Trash2, ToggleLeft, ToggleRight, Edit2, FileText, Eye, EyeOff, Save, ChevronDown, ChevronUp
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -66,16 +66,6 @@ const AdminPage = () => {
     title: '', excerpt: '', content: '', category: 'General',
     image: '', readTime: '5 min read', published: true
   });
-
-  // Password confirmation modal state
-  const [passwordModal, setPasswordModal] = useState(null); // { action, userId, userName, data }
-  const [adminPassword, setAdminPassword] = useState('');
-  const [showAdminPassword, setShowAdminPassword] = useState(false);
-  const [passwordLoading, setPasswordLoading] = useState(false);
-
-  // Edit user modal state
-  const [editUserModal, setEditUserModal] = useState(null);
-  const [editUserForm, setEditUserForm] = useState({ firstName: '', lastName: '', phone: '', isActive: true });
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -232,47 +222,6 @@ const AdminPage = () => {
   };
 
   const markAllRead = () => { setNotifications(prev => prev.map(n => ({ ...n, read: true }))); setUnreadCount(0); };
-
-  const openPasswordModal = (action, userId, userName, data = {}) => {
-    setPasswordModal({ action, userId, userName, data });
-    setAdminPassword('');
-    setShowAdminPassword(false);
-  };
-
-  const handlePasswordConfirm = async () => {
-    if (!adminPassword) return toast.error('Please enter your password');
-    setPasswordLoading(true);
-    try {
-      await axios.post(`${API_URL}/admin/verify-password`, { password: adminPassword }, { headers });
-      const { action, userId, userName, data } = passwordModal;
-      setPasswordModal(null);
-      setAdminPassword('');
-
-      if (action === 'delete') {
-        await axios.delete(`${API_URL}/admin/users/${userId}`, { headers });
-        toast.success(`${userName} deleted successfully`);
-        fetchUsers();
-      } else if (action === 'edit') {
-        await axios.patch(`${API_URL}/admin/users/${userId}/details`, data, { headers });
-        toast.success(`${userName} updated successfully`);
-        fetchUsers();
-        setEditUserModal(null);
-      } else if (action === 'role') {
-        await axios.patch(`${API_URL}/admin/users/${userId}/role`, { role: data.role }, { headers });
-        toast.success(`${userName} is now ${data.role}`);
-        fetchUsers();
-      }
-    } catch (e) {
-      if (e.response?.status === 401) {
-        toast.error('Incorrect password');
-      } else {
-        toast.error(e.response?.data?.message || 'Action failed');
-        setPasswordModal(null);
-      }
-    } finally {
-      setPasswordLoading(false);
-    }
-  };
 
   const filteredUsers = users.filter(u => `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(userSearch.toLowerCase()));
   const filteredBookings = bookings.filter(b => `${b.bookingReference} ${b.origin} ${b.destination} ${b.user?.firstName} ${b.user?.lastName}`.toLowerCase().includes(bookingSearch.toLowerCase()));
@@ -732,9 +681,9 @@ const AdminPage = () => {
               <span className="text-sm text-gray-500">{filteredUsers.length} users</span>
             </div>
             <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
-              <table className="w-full min-w-[750px]">
+              <table className="w-full min-w-[650px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>{['User', 'Email', 'Phone', 'Role', 'Status', 'Bookings', 'Joined', 'Actions'].map(h => <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
+                  <tr>{['User', 'Email', 'Phone', 'Role', 'Bookings', 'Joined', 'Change Role'].map(h => <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredUsers.map(u => (
@@ -755,38 +704,16 @@ const AdminPage = () => {
                           <span>{u.role}</span>
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${u.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                          {u.isActive !== false ? 'Active' : 'Suspended'}
-                        </span>
-                      </td>
                       <td className="px-4 py-3 text-sm font-bold text-gray-800">{u._count.bookings}</td>
                       <td className="px-4 py-3 text-sm text-gray-500">{formatDate(u.createdAt)}</td>
                       <td className="px-4 py-3">
-                        {u.id === user?.id ? (
-                          <span className="text-xs text-gray-400 italic">You</span>
-                        ) : (
-                          <div className="flex items-center space-x-1">
-                            {/* Edit */}
-                            <button
-                              onClick={() => { setEditUserModal(u); setEditUserForm({ firstName: u.firstName, lastName: u.lastName, phone: u.phone || '', isActive: u.isActive !== false }); }}
-                              className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition-colors" title="Edit user">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            {/* Toggle Role */}
-                            <button
-                              onClick={() => openPasswordModal('role', u.id, `${u.firstName} ${u.lastName}`, { role: u.role === 'USER' ? 'ADMIN' : 'USER' })}
-                              className={`p-1.5 rounded-lg transition-colors ${u.role === 'USER' ? 'text-purple-500 hover:bg-purple-50' : 'text-gray-400 hover:bg-gray-100'}`}
-                              title={u.role === 'USER' ? 'Make Admin' : 'Remove Admin'}>
-                              {u.role === 'USER' ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
-                            </button>
-                            {/* Delete */}
-                            <button
-                              onClick={() => openPasswordModal('delete', u.id, `${u.firstName} ${u.lastName}`)}
-                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-colors" title="Delete user">
-                              <UserX className="w-4 h-4" />
-                            </button>
-                          </div>
+                        {u.id === user?.id ? <span className="text-xs text-gray-400 italic">You</span> : (
+                          <button onClick={() => updateUserRole(u.id, u.role === 'USER' ? 'ADMIN' : 'USER', `${u.firstName} ${u.lastName}`)}
+                            disabled={updatingRole === u.id}
+                            className={`flex items-center space-x-1 px-3 py-1.5 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${u.role === 'USER' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-500 hover:bg-gray-600'}`}>
+                            {updatingRole === u.id ? <span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin inline-block" /> : u.role === 'USER' ? <ShieldCheck className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
+                            <span>{u.role === 'USER' ? 'Make Admin' : 'Remove Admin'}</span>
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -1074,124 +1001,6 @@ const AdminPage = () => {
         )}
       </div>
     </div>
-
-    {/* Password Confirmation Modal */}
-    {passwordModal && (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
-                <Lock className="w-4 h-4 text-red-600" />
-              </div>
-              <h3 className="text-base font-bold text-gray-800">Confirm Action</h3>
-            </div>
-            <button onClick={() => setPasswordModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="p-6">
-            <div className={`rounded-xl p-3 mb-4 text-sm ${passwordModal.action === 'delete' ? 'bg-red-50 border border-red-100' : 'bg-blue-50 border border-blue-100'}`}>
-              <p className="font-semibold text-gray-800">
-                {passwordModal.action === 'delete' ? `Delete ${passwordModal.userName}?` :
-                 passwordModal.action === 'role' ? `Change ${passwordModal.userName}'s role to ${passwordModal.data?.role}?` :
-                 `Edit ${passwordModal.userName}?`}
-              </p>
-              {passwordModal.action === 'delete' && (
-                <p className="text-xs text-red-600 mt-1">This will permanently delete the user and all their bookings.</p>
-              )}
-            </div>
-            <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Your Admin Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type={showAdminPassword ? 'text' : 'password'}
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handlePasswordConfirm()}
-                  placeholder="Enter your password to confirm"
-                  autoFocus
-                  className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button type="button" onClick={() => setShowAdminPassword(!showAdminPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="flex space-x-3">
-              <button onClick={() => setPasswordModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-200">Cancel</button>
-              <button
-                onClick={handlePasswordConfirm}
-                disabled={passwordLoading || !adminPassword}
-                className={`flex-1 text-white py-2.5 rounded-xl font-bold text-sm disabled:opacity-50 flex items-center justify-center space-x-2 transition-colors ${passwordModal.action === 'delete' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
-                {passwordLoading ? (
-                  <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span><span>Verifying...</span></>
-                ) : (
-                  <span>{passwordModal.action === 'delete' ? 'Delete User' : 'Confirm'}</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* Edit User Modal */}
-    {editUserModal && (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 className="text-base font-bold text-gray-800">Edit User — {editUserModal.firstName} {editUserModal.lastName}</h3>
-            <button onClick={() => setEditUserModal(null)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">First Name</label>
-                <input type="text" value={editUserForm.firstName} onChange={(e) => setEditUserForm(f => ({ ...f, firstName: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Last Name</label>
-                <input type="text" value={editUserForm.lastName} onChange={(e) => setEditUserForm(f => ({ ...f, lastName: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Phone</label>
-              <input type="tel" value={editUserForm.phone} onChange={(e) => setEditUserForm(f => ({ ...f, phone: e.target.value }))}
-                placeholder="+234 800 000 0000"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
-              <div>
-                <p className="text-sm font-semibold text-gray-700">Account Status</p>
-                <p className="text-xs text-gray-400">{editUserForm.isActive ? 'User can log in and make bookings' : 'User is suspended'}</p>
-              </div>
-              <div
-                onClick={() => setEditUserForm(f => ({ ...f, isActive: !f.isActive }))}
-                className={`w-12 h-6 rounded-full cursor-pointer transition-colors flex items-center px-0.5 ${editUserForm.isActive ? 'bg-green-500' : 'bg-gray-300'}`}>
-                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${editUserForm.isActive ? 'translate-x-6' : 'translate-x-0'}`}></div>
-              </div>
-            </div>
-            <div className="flex space-x-3 pt-2">
-              <button onClick={() => setEditUserModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-200">Cancel</button>
-              <button
-                onClick={() => openPasswordModal('edit', editUserModal.id, `${editUserModal.firstName} ${editUserModal.lastName}`, editUserForm)}
-                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 flex items-center justify-center space-x-2">
-                <Save className="w-4 h-4" />
-                <span>Save Changes</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
   );
 };
 
