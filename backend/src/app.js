@@ -35,6 +35,8 @@ app.use('/api/contact', require('./modules/contact/contact.routes'));
 app.use('/api/blog', require('./modules/blog/blog.routes'));
 app.use('/api/affiliate', require('./modules/affiliate/affiliate.routes'));
 app.use('/api/password', require('./modules/auth/password-reset.routes'));
+app.use('/api/otp', require('./modules/otp.routes'));
+app.use('/api/otp', require('./modules/otp.routes'));
 
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
 

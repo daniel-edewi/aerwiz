@@ -5,8 +5,9 @@ import useFlightStore from '../store/flightStore';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { Plane, Tag, Plus, Trash2, Clock, ChevronDown, ChevronUp, Check, AlertCircle, Luggage, Info, Lock, Gift, Award } from 'lucide-react';
+import { Plane, Tag, Plus, Trash2, Clock, ChevronDown, ChevronUp, Check, AlertCircle, Luggage, Info, Lock, Gift, Award, Mail, ShieldCheck } from 'lucide-react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'https://api.aerwiz.com/api';
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount);
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -289,12 +290,27 @@ const BookingPage = () => {
   const [showFlightDetails, setShowFlightDetails] = useState(false);
   const selectedSeat = location.state?.selectedSeat;
 
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [lastOtpEmail, setLastOtpEmail] = useState('');
+
   const numPassengers = searchParams.adults || 1;
   const [passengers, setPassengers] = useState(
     Array.from({ length: numPassengers }, (_, i) => defaultPassenger(i, selectedSeat))
   );
 
   const updatePassenger = (index, field, value) => {
+    // Reset OTP if email changes
+    if (index === 0 && field === 'email') {
+      setOtpSent(false);
+      setOtpVerified(false);
+      setOtpCode('');
+      setOtpError('');
+    }
     setPassengers(prev => prev.map((p, i) => i === index ? { ...p, [field]: value } : p));
   };
 
@@ -306,6 +322,40 @@ const BookingPage = () => {
   const removePassenger = (index) => {
     if (passengers.length <= 1) return;
     setPassengers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const sendOTP = async () => {
+    const email = passengers[0].email;
+    if (!email || !email.includes('@')) return toast.error('Please enter a valid email address first');
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      await axios.post(`${API_URL}/otp/send`, { email });
+      setOtpSent(true);
+      setLastOtpEmail(email);
+      toast.success(`Verification code sent to ${email}`);
+    } catch (e) {
+      setOtpError('Failed to send code. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const verifyOTP = async () => {
+    const email = passengers[0].email;
+    if (!otpCode || otpCode.length !== 6) return setOtpError('Please enter the 6-digit code');
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      await axios.post(`${API_URL}/otp/verify`, { email, otp: otpCode });
+      setOtpVerified(true);
+      setOtpError('');
+      toast.success('Email verified!');
+    } catch (e) {
+      setOtpError(e.response?.data?.message || 'Invalid code. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   if (!selectedFlight) {
@@ -351,7 +401,7 @@ const BookingPage = () => {
     setPromoLoading(true);
     try {
       const res = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api'}/promo/validate`,
+        `${API_URL}/promo/validate`,
         { code: promoCode, amount: grandTotal },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
@@ -540,19 +590,84 @@ const BookingPage = () => {
                   {index === 0 && (
                     <div className="border-t border-gray-100 pt-4">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Contact Information</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Field label="Email Address" required>
-                          <input type="email" value={passenger.email}
-                            onChange={(e) => updatePassenger(index, 'email', e.target.value)}
-                            className={inputClass} placeholder="confirmation@email.com" />
-                        </Field>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <Field label="Email Address" required>
+                            <div className="flex gap-2">
+                              <input
+                                type="email"
+                                value={passenger.email}
+                                onChange={(e) => updatePassenger(index, 'email', e.target.value)}
+                                className={`${inputClass} ${otpVerified ? 'border-green-400 bg-green-50' : ''}`}
+                                placeholder="confirmation@email.com"
+                              />
+                              {!otpVerified && passenger.email && passenger.email.includes('@') && (
+                                <button
+                                  type="button"
+                                  onClick={sendOTP}
+                                  disabled={otpLoading}
+                                  className="flex-shrink-0 bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap transition-colors"
+                                >
+                                  {otpLoading && !otpSent ? '...' : otpSent ? 'Resend' : 'Verify'}
+                                </button>
+                              )}
+                              {otpVerified && (
+                                <div className="flex-shrink-0 flex items-center justify-center w-10 bg-green-100 rounded-lg">
+                                  <ShieldCheck className="w-5 h-5 text-green-600" />
+                                </div>
+                              )}
+                            </div>
+                          </Field>
+
+                          {/* OTP Input */}
+                          {otpSent && !otpVerified && (
+                            <div className="mt-2">
+                              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                                <p className="text-xs text-blue-700 font-semibold mb-2 flex items-center space-x-1">
+                                  <Mail className="w-3.5 h-3.5" />
+                                  <span>Code sent to {lastOtpEmail}</span>
+                                </p>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    value={otpCode}
+                                    onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setOtpError(''); }}
+                                    onKeyDown={(e) => e.key === 'Enter' && verifyOTP()}
+                                    placeholder="Enter 6-digit code"
+                                    maxLength={6}
+                                    className="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-widest text-center"
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={verifyOTP}
+                                    disabled={otpLoading || otpCode.length !== 6}
+                                    className="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-700 disabled:opacity-50 whitespace-nowrap"
+                                  >
+                                    {otpLoading ? '...' : 'Confirm'}
+                                  </button>
+                                </div>
+                                {otpError && <p className="text-xs text-red-500 mt-1.5 font-medium">{otpError}</p>}
+                                <p className="text-xs text-gray-400 mt-1.5">Code expires in 10 minutes. Didn't receive it? Check spam or click Resend.</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {otpVerified && (
+                            <div className="mt-2 flex items-center space-x-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                              <ShieldCheck className="w-4 h-4 text-green-600 flex-shrink-0" />
+                              <p className="text-xs text-green-700 font-semibold">Email verified — tickets will be sent here</p>
+                            </div>
+                          )}
+                        </div>
+
                         <Field label="Phone Number" required>
                           <input type="tel" value={passenger.phone}
                             onChange={(e) => updatePassenger(index, 'phone', e.target.value)}
                             className={inputClass} placeholder="+234 800 000 0000" />
                         </Field>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2 flex items-center space-x-1">
+                      <p className="text-xs text-gray-400 flex items-center space-x-1">
                         <Info className="w-3 h-3" />
                         <span>Booking confirmation and e-ticket will be sent to this email</span>
                       </p>
@@ -603,7 +718,7 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* Promo Code — FIXED: stacks on mobile */}
+            {/* Promo Code */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center space-x-2">
                 <Tag className="w-4 h-4 text-blue-600" />
