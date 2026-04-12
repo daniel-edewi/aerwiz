@@ -4,7 +4,7 @@ const registerValidation = [
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters'),
@@ -26,7 +26,7 @@ const loginValidation = [
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false }),
   body('password')
     .notEmpty()
     .withMessage('Password is required')
