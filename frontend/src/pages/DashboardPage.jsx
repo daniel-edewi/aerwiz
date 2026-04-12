@@ -7,11 +7,11 @@ import axios from 'axios';
 import {
   Plane, User, LogOut, Calendar, CreditCard, MapPin, Clock,
   X, ChevronDown, ChevronUp, Bell, Search, Download,
-  Edit2, Check, ArrowRight, Home, Settings
+  Edit2, Check, ArrowRight, Home, Settings, FileText, Tag
 } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
 
-const API = process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api';
+const API = process.env.REACT_APP_API_URL || 'https://api.aerwiz.com/api';
 const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(amount);
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -36,7 +36,7 @@ const AirplaneLoader = () => (
 
 const Modal = ({ title, onClose, children }) => (
   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <h3 className="text-base font-bold text-gray-800">{title}</h3>
         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
@@ -54,6 +54,7 @@ const DashboardPage = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('bookings');
+  const [tripFilter, setTripFilter] = useState('upcoming');
   const [editMode, setEditMode] = useState(false);
   const [profileForm, setProfileForm] = useState({
     firstName: user?.firstName || '',
@@ -64,6 +65,7 @@ const DashboardPage = () => {
   const [expandedBooking, setExpandedBooking] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const [cancelModal, setCancelModal] = useState(null);
   const [dateModal, setDateModal] = useState(null);
@@ -109,24 +111,95 @@ const DashboardPage = () => {
     }
   };
 
-  const downloadBoardingPass = (booking) => {
-    fetch(`${API}/bookings/${booking.id}/boarding-pass`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(r => r.blob()).then(blob => {
+  const downloadETicket = async (booking) => {
+    setDownloadingId(booking.id);
+    try {
+      const response = await fetch(`${API}/bookings/${booking.id}/boarding-pass`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `boarding-pass-${booking.bookingReference}.pdf`;
+      a.download = `aerwiz-eticket-${booking.bookingReference}.pdf`;
+      document.body.appendChild(a);
       a.click();
-    }).catch(() => toast.error('Failed to download boarding pass'));
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('E-ticket downloaded!');
+    } catch (e) {
+      // Fallback: generate a simple e-ticket HTML and print
+      generateETicketHTML(booking);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const generateETicketHTML = (booking) => {
+    const passengers = booking.passengers?.map(p => `${p.title} ${p.firstName} ${p.lastName}`).join(', ') || 'N/A';
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>E-Ticket - ${booking.bookingReference}</title>
+        <style>
+          body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; color: #1e293b; }
+          .header { background: #1d4ed8; color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center; }
+          .logo { font-size: 28px; font-weight: 900; }
+          .logo span { color: #93c5fd; }
+          .body { border: 1px solid #e2e8f0; border-top: none; padding: 24px; border-radius: 0 0 12px 12px; }
+          .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+          .label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+          .value { font-weight: 700; font-size: 14px; }
+          .route { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; font-size: 32px; font-weight: 900; }
+          .ref { background: #f0f9ff; border: 2px dashed #bfdbfe; border-radius: 8px; padding: 12px; text-align: center; margin: 16px 0; }
+          .ref-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; }
+          .ref-value { font-size: 22px; font-weight: 900; color: #1d4ed8; font-family: monospace; letter-spacing: 0.1em; }
+          .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #94a3b8; }
+          @media print { body { margin: 0; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">aer<span>wiz</span></div>
+          <div style="margin-top:8px;font-size:14px;opacity:0.8;">Electronic Ticket & Itinerary Receipt</div>
+        </div>
+        <div class="body">
+          <div class="ref">
+            <div class="ref-label">Booking Reference</div>
+            <div class="ref-value">${booking.bookingReference}</div>
+          </div>
+          <div class="route">
+            <span>${booking.origin}</span>
+            <span style="font-size:18px;color:#64748b;">✈</span>
+            <span>${booking.destination}</span>
+          </div>
+          <div class="row"><span class="label">Passenger(s)</span><span class="value">${passengers}</span></div>
+          <div class="row"><span class="label">Departure Date</span><span class="value">${formatDate(booking.departureDate)}</span></div>
+          <div class="row"><span class="label">Flight</span><span class="value">${booking.flightNumber || 'See airline app'}</span></div>
+          <div class="row"><span class="label">Cabin Class</span><span class="value">${booking.cabinClass || 'ECONOMY'}</span></div>
+          <div class="row"><span class="label">Status</span><span class="value" style="color:#16a34a;">${booking.status}</span></div>
+          <div class="row"><span class="label">Total Amount</span><span class="value" style="color:#1d4ed8;">${formatPrice(booking.totalAmount)}</span></div>
+          <div class="footer">
+            <p>This is your official e-ticket from Aerwiz. Please present this at check-in.</p>
+            <p>support@aerwiz.com · +234 800 000 0000 · aerwiz.com</p>
+            <p>Issued: ${new Date().toLocaleString('en-NG')}</p>
+          </div>
+        </div>
+        <script>window.onload = function() { window.print(); }</script>
+      </body>
+      </html>
+    `;
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
   };
 
   const handleCancel = async () => {
     setActionLoading(true);
     try {
-      await axios.patch(`${API}/bookings/${cancelModal.id}/cancel`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.patch(`${API}/bookings/${cancelModal.id}/cancel`, {}, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Booking cancelled successfully');
       setCancelModal(null);
       fetchBookings();
@@ -141,10 +214,7 @@ const DashboardPage = () => {
     if (!newDate) return toast.error('Please select a new date');
     setActionLoading(true);
     try {
-      await axios.patch(`${API}/bookings/${dateModal.id}/change-date`,
-        { newDepartureDate: newDate },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.patch(`${API}/bookings/${dateModal.id}/change-date`, { newDepartureDate: newDate }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Departure date updated!');
       setDateModal(null); setNewDate('');
       fetchBookings();
@@ -159,10 +229,7 @@ const DashboardPage = () => {
     if (!newOrigin || !newDestination) return toast.error('Please fill in both fields');
     setActionLoading(true);
     try {
-      await axios.patch(`${API}/bookings/${routeModal.id}/change-route`,
-        { origin: newOrigin, destination: newDestination },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.patch(`${API}/bookings/${routeModal.id}/change-route`, { origin: newOrigin, destination: newDestination }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Route updated!');
       setRouteModal(null); setNewOrigin(''); setNewDestination('');
       fetchBookings();
@@ -178,7 +245,13 @@ const DashboardPage = () => {
   const pendingBookings = bookings.filter(b => b.status === 'PENDING').length;
   const canManage = (status) => !['CANCELLED', 'COMPLETED'].includes(status);
 
-  const filteredBookings = bookings.filter(b => {
+  const now = new Date();
+  const upcomingBookings = bookings.filter(b => new Date(b.departureDate) >= now && b.status !== 'CANCELLED');
+  const pastBookings = bookings.filter(b => new Date(b.departureDate) < now || b.status === 'COMPLETED' || b.status === 'CANCELLED');
+
+  const baseBookings = tripFilter === 'upcoming' ? upcomingBookings : tripFilter === 'past' ? pastBookings : bookings;
+
+  const filteredBookings = baseBookings.filter(b => {
     const matchesSearch = !searchQuery ||
       b.bookingReference.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -202,7 +275,7 @@ const DashboardPage = () => {
               <p className="font-bold text-gray-800">{cancelModal.origin} → {cancelModal.destination}</p>
               <p className="text-gray-400 text-xs mt-0.5">{cancelModal.bookingReference} · {formatDate(cancelModal.departureDate)}</p>
             </div>
-            <p className="text-xs text-orange-500 mt-3 bg-orange-50 rounded-lg px-3 py-2">⚠️ Refunds take 5-10 business days to process</p>
+            <p className="text-xs text-orange-500 mt-3 bg-orange-50 rounded-lg px-3 py-2">Refunds take 5-10 business days to process</p>
           </div>
           <div className="flex space-x-3">
             <button onClick={() => setCancelModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors">Keep Booking</button>
@@ -227,7 +300,7 @@ const DashboardPage = () => {
           </div>
           <p className="text-xs text-gray-400 mb-4">Date changes may affect your fare. Our team will contact you with any differences.</p>
           <div className="flex space-x-3">
-            <button onClick={() => setDateModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-200">Cancel</button>
+            <button onClick={() => setDateModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm">Cancel</button>
             <button onClick={handleChangeDate} disabled={actionLoading || !newDate} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-medium text-sm disabled:opacity-50">
               {actionLoading ? <AirplaneLoader /> : 'Update Date'}
             </button>
@@ -245,9 +318,9 @@ const DashboardPage = () => {
             <AirportSearch label="New Origin" value={newOrigin} onChange={setNewOrigin} placeholder="City or airport" />
             <AirportSearch label="New Destination" value={newDestination} onChange={setNewDestination} placeholder="City or airport" />
           </div>
-          <p className="text-xs text-orange-500 mb-4 bg-orange-50 rounded-lg px-3 py-2">⚠️ Route changes require fare recalculation. Our team will contact you.</p>
+          <p className="text-xs text-orange-500 mb-4 bg-orange-50 rounded-lg px-3 py-2">Route changes require fare recalculation. Our team will contact you.</p>
           <div className="flex space-x-3">
-            <button onClick={() => setRouteModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-200">Cancel</button>
+            <button onClick={() => setRouteModal(null)} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-xl font-medium text-sm">Cancel</button>
             <button onClick={handleChangeRoute} disabled={actionLoading || !newOrigin || !newDestination} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-medium text-sm disabled:opacity-50">
               {actionLoading ? <AirplaneLoader /> : 'Update Route'}
             </button>
@@ -258,11 +331,15 @@ const DashboardPage = () => {
       {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Plane className="text-white w-4 h-4" />
-            </div>
-            <span className="text-blue-700 text-lg font-bold">Aerwiz</span>
+          <div className="cursor-pointer" onClick={() => navigate('/')}>
+            <svg viewBox="0 0 800 300" height="36" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
+              <text x="400" y="210" textAnchor="middle"
+                fontFamily="system-ui, -apple-system, sans-serif"
+                fontSize="160" fontWeight="800" letterSpacing="-5">
+                <tspan fill="#1e3a5f">aer</tspan>
+                <tspan fill="#2563eb">wiz</tspan>
+              </text>
+            </svg>
           </div>
           <div className="flex items-center space-x-2">
             <button onClick={() => navigate('/')} className="hidden sm:flex items-center space-x-1 text-gray-500 hover:text-blue-600 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
@@ -305,7 +382,7 @@ const DashboardPage = () => {
           {[
             { label: 'Total Bookings', value: bookings.length, icon: Plane, color: 'blue' },
             { label: 'Confirmed Trips', value: confirmedTrips, icon: Check, color: 'green' },
-            { label: 'Pending Payment', value: pendingBookings, icon: Clock, color: 'orange' },
+            { label: 'Upcoming Trips', value: upcomingBookings.length, icon: Clock, color: 'orange' },
             { label: 'Total Spent', value: formatPrice(totalSpent), icon: CreditCard, color: 'purple', small: true },
           ].map(stat => (
             <div key={stat.label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
@@ -327,9 +404,7 @@ const DashboardPage = () => {
             ].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center space-x-2 px-6 py-4 text-sm font-semibold transition-colors border-b-2 ${
-                  activeTab === tab.key
-                    ? 'border-blue-600 text-blue-600 bg-blue-50/50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                  activeTab === tab.key ? 'border-blue-600 text-blue-600 bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}>
                 <tab.icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -343,24 +418,41 @@ const DashboardPage = () => {
           {/* Bookings Tab */}
           {activeTab === 'bookings' && (
             <div className="p-4 sm:p-6">
-              {/* Search & Filter */}
+
+              {/* Trip Filter + Search */}
               {bookings.length > 0 && (
-                <div className="flex flex-col sm:flex-row gap-3 mb-5">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search by reference, route..."
-                      className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                <div className="space-y-3 mb-5">
+                  {/* Upcoming / Past / All toggle */}
+                  <div className="flex space-x-1 bg-gray-100 rounded-xl p-1 w-fit">
+                    {[
+                      { key: 'upcoming', label: `Upcoming (${upcomingBookings.length})` },
+                      { key: 'past', label: `Past (${pastBookings.length})` },
+                      { key: 'all', label: `All (${bookings.length})` },
+                    ].map(f => (
+                      <button key={f.key} onClick={() => setTripFilter(f.key)}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${tripFilter === f.key ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                        {f.label}
+                      </button>
+                    ))}
                   </div>
-                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600">
-                    <option value="all">All Status</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="CONFIRMED">Confirmed</option>
-                    <option value="PAYMENT_PENDING">Payment Pending</option>
-                    <option value="CANCELLED">Cancelled</option>
-                    <option value="COMPLETED">Completed</option>
-                  </select>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by reference, route..."
+                        className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+                      className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-600">
+                      <option value="all">All Status</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="CONFIRMED">Confirmed</option>
+                      <option value="PAYMENT_PENDING">Payment Pending</option>
+                      <option value="CANCELLED">Cancelled</option>
+                      <option value="COMPLETED">Completed</option>
+                    </select>
+                  </div>
                 </div>
               )}
 
@@ -387,21 +479,22 @@ const DashboardPage = () => {
                 </div>
               ) : filteredBookings.length === 0 ? (
                 <div className="text-center py-10">
-                  <p className="text-gray-400">No bookings match your search</p>
-                  <button onClick={() => { setSearchQuery(''); setStatusFilter('all'); }} className="text-blue-600 text-sm mt-2 hover:underline">Clear filters</button>
+                  <Plane className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-400">No {tripFilter !== 'all' ? tripFilter : ''} bookings found</p>
+                  <button onClick={() => { setSearchQuery(''); setStatusFilter('all'); setTripFilter('all'); }} className="text-blue-600 text-sm mt-2 hover:underline">Clear filters</button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {filteredBookings.map(booking => {
                     const statusConfig = STATUS_CONFIG[booking.status] || STATUS_CONFIG.PENDING;
                     const isExpanded = expandedBooking === booking.id;
+                    const isUpcoming = new Date(booking.departureDate) >= now;
                     return (
                       <div key={booking.id} className="border border-gray-100 rounded-2xl overflow-hidden hover:border-blue-200 hover:shadow-sm transition-all">
-                        {/* Card Header */}
                         <div className="p-4 sm:p-5">
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isUpcoming ? 'bg-blue-600' : 'bg-gray-400'}`}>
                                 <Plane className="w-5 h-5 text-white" />
                               </div>
                               <div>
@@ -419,7 +512,6 @@ const DashboardPage = () => {
                             </span>
                           </div>
 
-                          {/* Flight Details Grid */}
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 rounded-xl p-3 mb-4">
                             <div>
                               <p className="text-xs text-gray-400 mb-0.5">Departure</p>
@@ -427,11 +519,11 @@ const DashboardPage = () => {
                             </div>
                             <div>
                               <p className="text-xs text-gray-400 mb-0.5">Flight</p>
-                              <p className="text-sm font-semibold text-gray-700">{booking.flightNumber}</p>
+                              <p className="text-sm font-semibold text-gray-700">{booking.flightNumber || '—'}</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-400 mb-0.5">Class</p>
-                              <p className="text-sm font-semibold text-gray-700">{booking.cabinClass}</p>
+                              <p className="text-sm font-semibold text-gray-700">{booking.cabinClass || 'ECONOMY'}</p>
                             </div>
                             <div>
                               <p className="text-xs text-gray-400 mb-0.5">Amount</p>
@@ -439,7 +531,6 @@ const DashboardPage = () => {
                             </div>
                           </div>
 
-                          {/* Passengers */}
                           {booking.passengers && booking.passengers.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-4">
                               {booking.passengers.map((p, i) => (
@@ -451,7 +542,6 @@ const DashboardPage = () => {
                             </div>
                           )}
 
-                          {/* Actions */}
                           <div className="flex flex-wrap items-center gap-2">
                             {booking.status === 'PENDING' && (
                               <button onClick={async () => {
@@ -465,10 +555,15 @@ const DashboardPage = () => {
                               </button>
                             )}
                             {['CONFIRMED', 'COMPLETED'].includes(booking.status) && (
-                              <button onClick={() => downloadBoardingPass(booking)}
-                                className="flex items-center space-x-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
-                                <Download className="w-3.5 h-3.5" />
-                                <span>Boarding Pass</span>
+                              <button
+                                onClick={() => downloadETicket(booking)}
+                                disabled={downloadingId === booking.id}
+                                className="flex items-center space-x-1.5 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors disabled:opacity-50">
+                                {downloadingId === booking.id ? (
+                                  <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span><span>Downloading...</span></>
+                                ) : (
+                                  <><FileText className="w-3.5 h-3.5" /><span>E-Ticket</span></>
+                                )}
                               </button>
                             )}
                             {canManage(booking.status) && (
@@ -482,7 +577,6 @@ const DashboardPage = () => {
                           </div>
                         </div>
 
-                        {/* Manage Panel */}
                         {isExpanded && canManage(booking.status) && (
                           <div className="border-t border-gray-100 bg-gray-50 px-4 sm:px-5 py-4">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Booking Management</p>
@@ -523,12 +617,9 @@ const DashboardPage = () => {
           {activeTab === 'profile' && (
             <div className="p-4 sm:p-6">
               <div className="max-w-lg">
-                {/* Avatar */}
                 <div className="flex items-center space-x-4 mb-6 p-4 bg-blue-50 rounded-2xl">
                   <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xl font-bold">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </span>
+                    <span className="text-white text-xl font-bold">{user?.firstName?.[0]}{user?.lastName?.[0]}</span>
                   </div>
                   <div>
                     <p className="font-bold text-gray-800">{user?.firstName} {user?.lastName}</p>
