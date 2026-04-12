@@ -48,7 +48,7 @@ const RegisterPage = () => {
     setLoading(true);
     try {
       const response = await authAPI.register(form);
-      const { user, accessToken } = response.data.data;
+      const { user, token: accessToken } = response.data.data;
       login(user, accessToken);
       toast.success(`Welcome to Aerwiz, ${user.firstName}!`);
       navigate('/');
