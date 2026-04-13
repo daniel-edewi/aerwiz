@@ -67,4 +67,37 @@ const getFlightPrice = async (flightOffer) => {
   return response.data;
 };
 
-module.exports = { searchFlights, searchAirports, getFlightPrice };
+module.exports = { searchFlights, searchAirports, getFlightPrice, getFareCalendar };
+
+const getFareCalendar = async ({ origin, destination, month }) => {
+  const cacheKey = `calendar_${origin}_${destination}_${month}`;
+  const cached = flightCache.get(cacheKey);
+  if (cached) return cached;
+  try {
+    const [year, mon] = month.split('-').map(Number);
+    const daysInMonth = new Date(year, mon, 0).getDate();
+    const startDate = `${month}-01`;
+    const endDate = `${month}-${String(daysInMonth).padStart(2, '0')}`;
+    const response = await amadeus.shopping.flightDates.get({
+      origin,
+      destination,
+      departureDate: `${startDate},${endDate}`,
+      currencyCode: 'NGN',
+      oneWay: true
+    });
+    const data = response.data || [];
+    const priceMap = {};
+    data.forEach(item => {
+      priceMap[item.departureDate] = { price: parseFloat(item.price.total), currency: item.price.currency || 'NGN' };
+    });
+    const prices = Object.values(priceMap).map(p => p.price);
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
+    const result = { priceMap, minPrice, maxPrice, origin, destination, month };
+    flightCache.set(cacheKey, result, 1800);
+    return result;
+  } catch (err) {
+    console.error('Fare calendar error:', err.message);
+    return { priceMap: {}, minPrice: 0, maxPrice: 0, origin, destination, month };
+  }
+};

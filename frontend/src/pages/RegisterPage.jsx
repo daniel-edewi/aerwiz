@@ -130,7 +130,7 @@ const RegisterPage = () => {
                   <input type="text" value={form.firstName}
                     onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl pl-10 pr-3 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                    placeholder="Daniel" required />
+                    placeholder="John" required />
                 </div>
               </div>
               <div>
@@ -138,7 +138,7 @@ const RegisterPage = () => {
                 <input type="text" value={form.lastName}
                   onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
-                  placeholder="Edewi" required />
+                  placeholder="Smith" required />
               </div>
             </div>
 

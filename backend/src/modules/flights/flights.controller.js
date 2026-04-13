@@ -55,3 +55,19 @@ const searchAirports = async (req, res) => {
 };
 
 module.exports = { searchFlights, searchAirports };
+
+const getFareCalendarHandler = async (req, res) => {
+  const { origin, destination, month } = req.query;
+  if (!origin || !destination || !month) {
+    return res.status(400).json({ success: false, message: 'origin, destination and month are required' });
+  }
+  try {
+    const { getFareCalendar } = require('./flights.service');
+    const data = await getFareCalendar({ origin, destination, month });
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { ...module.exports, getFareCalendarHandler };
