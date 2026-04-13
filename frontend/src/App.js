@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/common/Layout';
 import ScrollToTop from './components/common/ScrollToTop';
+import PWAInstallPrompt from './components/common/pwa-install-prompt';
 import HomePage from './pages/HomePage';
 import FlightsPage from './pages/FlightsPage';
 import LoginPage from './pages/LoginPage';
@@ -32,6 +33,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
+      <PWAInstallPrompt />
       <Toaster position="top-right" />
       <Layout>
         <Routes>

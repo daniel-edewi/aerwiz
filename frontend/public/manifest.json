@@ -1,25 +1,69 @@
 {
   "short_name": "Aerwiz",
   "name": "Aerwiz — Better Flights. Lower Prices.",
+  "description": "Book cheap flights across Africa and the world. Skip the agent, keep the savings.",
   "icons": [
     {
       "src": "aerwiz-favicon-01.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "theme_color": "#1d4ed8",
-  "background_color": "#ffffff"
+  "background_color": "#1d4ed8",
+  "categories": ["travel", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Search Flights",
+      "short_name": "Search",
+      "description": "Search for flights",
+      "url": "/",
+      "icons": [{ "src": "aerwiz-favicon-01.svg", "sizes": "any" }]
+    },
+    {
+      "name": "My Bookings",
+      "short_name": "Bookings",
+      "description": "View your bookings",
+      "url": "/dashboard",
+      "icons": [{ "src": "aerwiz-favicon-01.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Price Alerts",
+      "short_name": "Alerts",
+      "description": "Manage price alerts",
+      "url": "/alerts",
+      "icons": [{ "src": "aerwiz-favicon-01.svg", "sizes": "any" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
 }
