@@ -67,7 +67,6 @@ const getFlightPrice = async (flightOffer) => {
   return response.data;
 };
 
-module.exports = { searchFlights, searchAirports, getFlightPrice, getFareCalendar };
 
 const getFareCalendar = async ({ origin, destination, month }) => {
   const cacheKey = `calendar_${origin}_${destination}_${month}`;
@@ -101,3 +100,4 @@ const getFareCalendar = async ({ origin, destination, month }) => {
     return { priceMap: {}, minPrice: 0, maxPrice: 0, origin, destination, month };
   }
 };
+module.exports = { searchFlights, searchAirports, getFlightPrice, getFareCalendar };
