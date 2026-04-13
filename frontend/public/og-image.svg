@@ -1,0 +1,39 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a5f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <!-- Decorative circles -->
+  <circle cx="1050" cy="80" r="200" fill="#2563eb" opacity="0.3"/>
+  <circle cx="150" cy="550" r="150" fill="#1e40af" opacity="0.3"/>
+  <circle cx="1100" cy="500" r="120" fill="#3b82f6" opacity="0.2"/>
+
+  <!-- Plane icon -->
+  <g transform="translate(540, 160)">
+    <path d="M60 10 L100 50 L80 50 L80 90 L40 70 L40 90 L20 80 L20 70 L0 70 L0 50 L20 50 Z" fill="white" opacity="0.15" transform="scale(1.5) rotate(-30) translate(-30, -40)"/>
+  </g>
+
+  <!-- Logo -->
+  <text x="600" y="260" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="120" font-weight="900" letter-spacing="-3">
+    <tspan fill="white">aer</tspan><tspan fill="#93c5fd">wiz</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="340" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="700" fill="white" opacity="0.9">Better Flights. Lower Prices.</text>
+
+  <!-- Sub tagline -->
+  <text x="600" y="400" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="400" fill="#93c5fd">Skip the Agent. Keep the Savings.</text>
+
+  <!-- URL -->
+  <text x="600" y="540" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="600" fill="white" opacity="0.6">aerwiz.com</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="590" width="1200" height="40" fill="#1d4ed8" opacity="0.5"/>
+  <text x="600" y="617" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="white" opacity="0.7">✈ Flights across Africa and the World</text>
+</svg>

@@ -1,3 +1,8 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin
+Disallow: /admin/login
+Disallow: /dashboard
+Disallow: /payment/verify
+
+Sitemap: https://aerwiz.com/sitemap.xml
