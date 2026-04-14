@@ -368,6 +368,15 @@ const FlightsPage = () => {
         </div>
       </div>
 
+      {searchParams.origin && searchParams.destination && (
+        <FareCalendar
+          origin={searchParams.origin}
+          destination={searchParams.destination}
+          adults={searchParams.adults || 1}
+          isRoundTrip={searchParams.tripType === 'ROUND_TRIP'}
+          returnDate={searchParams.returnDate || ''}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-4 py-5">
         <div className="flex gap-5">
 
@@ -525,13 +534,6 @@ const FlightsPage = () => {
             )}
 
             {/* Fare Calendar */}
-            {searchParams.origin && searchParams.destination && (
-              <FareCalendar
-                origin={searchParams.origin}
-                destination={searchParams.destination}
-                adults={searchParams.adults || 1}
-              />
-            )}
           </div>
         </div>
       </div>
