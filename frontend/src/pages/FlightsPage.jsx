@@ -36,13 +36,13 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
   <div className="w-full min-w-0">
     <div className="flex items-center w-full min-w-0 gap-2 sm:gap-4">
       <div className="flex items-center space-x-2 w-24 sm:w-40 flex-shrink-0 min-w-0">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
           <img src={getAirlineLogo(seg.carrierCode)} alt={seg.carrierCode}
-            className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
             onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span class="text-xs font-black text-blue-700">${seg.carrierCode}</span>`; }} />
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-bold text-gray-800 leading-tight truncate">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode}</p>
+          <p className="text-sm font-extrabold text-gray-900 leading-tight truncate">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode}</p>
           <p className="text-xs text-gray-400 mt-0.5 truncate">{seg.carrierCode}{seg.number}</p>
         </div>
       </div>
@@ -368,6 +368,9 @@ const FlightsPage = () => {
         </div>
       </div>
 
+      {searchParams.origin && searchParams.destination && (
+        <FareCalendar origin={searchParams.origin} destination={searchParams.destination} adults={searchParams.adults || 1} />
+      )}
       <div className="max-w-7xl mx-auto px-4 py-5">
         <div className="flex gap-5">
 
@@ -522,15 +525,6 @@ const FlightsPage = () => {
                 <button onClick={() => setFilters({ stops: 'all', maxPrice: '', airlines: [] })}
                   className="mt-3 text-blue-600 text-sm font-semibold hover:underline">Clear all filters</button>
               </div>
-            )}
-
-            {/* Fare Calendar */}
-            {searchParams.origin && searchParams.destination && (
-              <FareCalendar
-                origin={searchParams.origin}
-                destination={searchParams.destination}
-                adults={searchParams.adults || 1}
-              />
             )}
           </div>
         </div>
