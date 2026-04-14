@@ -35,13 +35,13 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
   <div className="w-full min-w-0">
     <div className="flex items-center w-full min-w-0 gap-2 sm:gap-4">
       <div className="flex items-center space-x-2 w-24 sm:w-40 flex-shrink-0 min-w-0">
-        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
           <img src={getAirlineLogo(seg.carrierCode)} alt={seg.carrierCode}
-            className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
-            onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span class="text-xs font-black text-blue-700">${seg.carrierCode}</span>`; }} />
+            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+            onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span class="text-sm font-black text-blue-700">${seg.carrierCode}</span>`; }} />
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-bold text-gray-800 leading-tight truncate">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode}</p>
+          <p className="text-sm font-extrabold text-gray-900 leading-tight truncate">{AIRLINE_NAMES[seg.carrierCode] || seg.carrierCode}</p>
           <p className="text-xs text-gray-400 mt-0.5 truncate">{seg.carrierCode}{seg.number}</p>
         </div>
       </div>
@@ -80,8 +80,7 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
   </div>
 );
 
-// Single flight card (used inside airline group)
-const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
+const FlightCard = ({ flight, isLowest, isFastest, onSelect }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const seg = flight.itineraries[0].segments[0];
   const lastSeg = flight.itineraries[0].segments[flight.itineraries[0].segments.length - 1];
@@ -100,7 +99,7 @@ const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
   const retSegments = isRoundTrip ? flight.itineraries[1].segments : null;
 
   return (
-    <div className={`bg-white border-b border-gray-100 last:border-b-0 transition-all hover:bg-blue-50/30 ${isLowest ? 'bg-blue-50/20' : ''}`}>
+    <div className="border-b border-gray-100 last:border-b-0 hover:bg-blue-50/20 transition-colors">
       {(isLowest || isFastest) && (
         <div className="px-4 pt-2 flex space-x-2">
           {isLowest && <span className="bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">Best Price</span>}
@@ -109,7 +108,6 @@ const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
       )}
       <div className="p-4 sm:p-5">
         <FlightLeg seg={seg} lastSeg={lastSeg} stops={stops} duration={duration} segments={segments} />
-
         {isRoundTrip && (
           <>
             <div className="border-t border-dashed border-gray-200 my-3 flex items-center">
@@ -118,28 +116,26 @@ const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
             <FlightLeg seg={retSeg} lastSeg={retLastSeg} stops={retStops} duration={retDuration} segments={retSegments} />
           </>
         )}
-
         <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
           <span className="text-xs text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full font-medium">{cabin?.replace('_', ' ')}</span>
           {includedCabinBags && (
             <span className="flex items-center space-x-1 text-xs text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-medium">
-              <Check className="w-3 h-3 flex-shrink-0" /><span>Cabin bag</span>
+              <Check className="w-3 h-3" /><span>Cabin bag</span>
             </span>
           )}
           {includedBags ? (
             <span className="flex items-center space-x-1 text-xs text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full font-medium">
-              <Check className="w-3 h-3 flex-shrink-0" /><span>{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''}</span>
+              <Check className="w-3 h-3" /><span>{includedBags.quantity} checked bag{includedBags.quantity > 1 ? 's' : ''}</span>
             </span>
           ) : (
             <span className="text-xs text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full font-medium">No checked bag</span>
           )}
           <button onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 font-semibold ml-auto">
+            className="flex items-center space-x-1 text-xs text-blue-600 font-semibold ml-auto">
             <span>{isExpanded ? 'Less' : 'Details'}</span>
             {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
         </div>
-
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-gray-100">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -160,8 +156,8 @@ const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Fare Breakdown</p>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 text-xs text-gray-500 space-y-2.5">
                   <div className="flex justify-between"><span>Cabin Class</span><span className="font-semibold text-gray-700">{cabin?.replace('_', ' ')}</span></div>
-                  <div className="flex justify-between"><span>Cabin Bag</span><span className={`font-semibold ${includedCabinBags ? 'text-green-600' : 'text-gray-400'}`}>{includedCabinBags ? `${includedCabinBags.quantity} included` : 'Not included'}</span></div>
-                  <div className="flex justify-between"><span>Checked Bag</span><span className={`font-semibold ${includedBags ? 'text-green-600' : 'text-orange-500'}`}>{includedBags ? `${includedBags.quantity}x ${includedBags.weight ? `${includedBags.weight}${includedBags.weightUnit}` : 'included'}` : 'Not included'}</span></div>
+                  <div className="flex justify-between"><span>Cabin Bag</span><span className={`font-semibold ${includedCabinBags ? 'text-green-600' : 'text-gray-400'}`}>{includedCabinBags ? 'Included' : 'Not included'}</span></div>
+                  <div className="flex justify-between"><span>Checked Bag</span><span className={`font-semibold ${includedBags ? 'text-green-600' : 'text-orange-500'}`}>{includedBags ? `${includedBags.quantity}x included` : 'Not included'}</span></div>
                   <div className="border-t border-gray-200 pt-2 space-y-2">
                     <div className="flex justify-between"><span>Base Fare</span><span className="font-semibold text-gray-700">{formatPrice(flight.price.base)}</span></div>
                     <div className="flex justify-between"><span>Taxes & Fees</span><span className="font-semibold text-gray-700">{formatPrice(parseFloat(flight.price.grandTotal) - parseFloat(flight.price.base))}</span></div>
@@ -172,7 +168,6 @@ const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
             </div>
           </div>
         )}
-
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 gap-3">
           <div className="min-w-0">
             <p className="text-xl sm:text-2xl font-black text-blue-600 tracking-tight leading-none">{formatPrice(flight.price.grandTotal)}</p>
@@ -196,21 +191,19 @@ const FlightCard = ({ flight, index, isLowest, isFastest, onSelect }) => {
   );
 };
 
-// Airline group card — shows cheapest flight by default, expandable to show all
-const AirlineGroup = ({ airlineCode, flights, cheapestFlight, fastestFlight, onSelect, defaultExpanded }) => {
-  const [expanded, setExpanded] = useState(defaultExpanded || false);
+const AirlineGroup = ({ airlineCode, flights, cheapestFlight, fastestFlight, onSelect }) => {
+  const [expanded, setExpanded] = useState(false);
   const cheapestPrice = Math.min(...flights.map(f => parseFloat(f.price.grandTotal)));
   const airlineName = AIRLINE_NAMES[airlineCode] || airlineCode;
   const shownFlights = expanded ? flights : [flights[0]];
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md ${defaultExpanded ? 'border-blue-300 ring-1 ring-blue-100' : 'border-gray-100'}`}>
-      {/* Airline header */}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between px-4 sm:px-5 py-3 bg-gray-50 border-b border-gray-100">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-lg overflow-hidden bg-white border border-gray-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
             <img src={getAirlineLogo(airlineCode)} alt={airlineCode}
-              className="w-7 h-7 object-contain"
+              className="w-8 h-8 object-contain"
               onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span class="text-xs font-black text-blue-700">${airlineCode}</span>`; }} />
           </div>
           <div>
@@ -220,19 +213,16 @@ const AirlineGroup = ({ airlineCode, flights, cheapestFlight, fastestFlight, onS
         </div>
         {flights.length > 1 && (
           <button onClick={() => setExpanded(!expanded)}
-            className="flex items-center space-x-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+            className="flex items-center space-x-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
             <span>{expanded ? 'Show less' : `Show all ${flights.length}`}</span>
             {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>
-
-      {/* Flight cards */}
-      {shownFlights.map((flight, index) => (
+      {shownFlights.map((flight) => (
         <FlightCard
           key={flight.id}
           flight={flight}
-          index={index}
           isLowest={flight.id === cheapestFlight?.id}
           isFastest={flight.id === fastestFlight?.id}
           onSelect={onSelect}
@@ -291,17 +281,9 @@ const FlightsPage = () => {
     return results;
   }, [searchResults, filters, sortBy]);
 
-  const cheapestFlight = useMemo(() => {
-    if (!filtered.length) return null;
-    return [...filtered].sort((a, b) => parseFloat(a.price.grandTotal) - parseFloat(b.price.grandTotal))[0];
-  }, [filtered]);
+  const cheapestFlight = useMemo(() => filtered.length ? [...filtered].sort((a, b) => parseFloat(a.price.grandTotal) - parseFloat(b.price.grandTotal))[0] : null, [filtered]);
+  const fastestFlight = useMemo(() => filtered.length ? [...filtered].sort((a, b) => getDurationMinutes(a.itineraries[0].duration) - getDurationMinutes(b.itineraries[0].duration))[0] : null, [filtered]);
 
-  const fastestFlight = useMemo(() => {
-    if (!filtered.length) return null;
-    return [...filtered].sort((a, b) => getDurationMinutes(a.itineraries[0].duration) - getDurationMinutes(b.itineraries[0].duration))[0];
-  }, [filtered]);
-
-  // Group flights by airline
   const groupedByAirline = useMemo(() => {
     const groups = {};
     filtered.forEach(flight => {
@@ -309,7 +291,6 @@ const FlightsPage = () => {
       if (!groups[code]) groups[code] = [];
       groups[code].push(flight);
     });
-    // Sort groups by cheapest flight in each group
     return Object.entries(groups).sort((a, b) => {
       const minA = Math.min(...a[1].map(f => parseFloat(f.price.grandTotal)));
       const minB = Math.min(...b[1].map(f => parseFloat(f.price.grandTotal)));
@@ -318,18 +299,12 @@ const FlightsPage = () => {
   }, [filtered]);
 
   const toggleAirline = (code) => {
-    setFilters(f => ({
-      ...f,
-      airlines: f.airlines.includes(code) ? f.airlines.filter(a => a !== code) : [...f.airlines, code]
-    }));
+    setFilters(f => ({ ...f, airlines: f.airlines.includes(code) ? f.airlines.filter(a => a !== code) : [...f.airlines, code] }));
   };
 
   const activeFiltersCount = (filters.stops !== 'all' ? 1 : 0) + (filters.maxPrice ? 1 : 0) + filters.airlines.length;
 
-  const handleSelect = (flight) => {
-    setSelectedFlight(flight);
-    navigate('/book');
-  };
+  const handleSelect = (flight) => { setSelectedFlight(flight); navigate('/book'); };
 
   if (!searchResults.length) {
     return (
@@ -340,9 +315,7 @@ const FlightsPage = () => {
           </div>
           <h2 className="text-xl font-bold text-gray-600 mb-2">No flights to show</h2>
           <p className="text-gray-400 mb-5">Search for flights from the homepage</p>
-          <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-colors">
-            Search Flights
-          </button>
+          <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-blue-700">Search Flights</button>
         </div>
       </div>
     );
@@ -350,16 +323,25 @@ const FlightsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Sticky header */}
       <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center space-x-2 text-sm font-bold text-gray-800">
-              <span>
+              <span>{searchParams.origin}</span>
+              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span>{searchParams.destination}</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">{searchParams.departureDate} · {searchParams.adults || 1} adult{(searchParams.adults || 1) > 1 ? 's' : ''}</p>
+          </div>
+          <button onClick={() => navigate('/')} className="flex-shrink-0 text-xs text-blue-600 font-semibold border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50">Modify</button>
+        </div>
+      </div>
+
+      {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 py-5">
         <div className="flex gap-5">
-
-          {/* Sidebar filters — desktop */}
+          {/* Sidebar filters desktop */}
           <div className="hidden lg:block w-64 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 sticky top-20">
               <div className="flex items-center justify-between mb-4">
@@ -368,11 +350,9 @@ const FlightsPage = () => {
                   <span>Filters</span>
                 </h3>
                 {activeFiltersCount > 0 && (
-                  <button onClick={() => setFilters({ stops: 'all', maxPrice: '', airlines: [] })}
-                    className="text-xs text-red-500 font-semibold hover:text-red-600">Reset all</button>
+                  <button onClick={() => setFilters({ stops: 'all', maxPrice: '', airlines: [] })} className="text-xs text-red-500 font-semibold">Reset all</button>
                 )}
               </div>
-
               <div className="mb-5">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Stops</p>
                 <div className="space-y-2">
@@ -387,14 +367,12 @@ const FlightsPage = () => {
                   ))}
                 </div>
               </div>
-
               <div className="mb-5">
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Max Price</p>
                 <input type="number" placeholder="e.g. 500000" value={filters.maxPrice}
                   onChange={(e) => setFilters(f => ({ ...f, maxPrice: e.target.value }))}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
-
               <div>
                 <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Airlines</p>
                 <div className="space-y-2.5">
@@ -405,9 +383,8 @@ const FlightsPage = () => {
                         {filters.airlines.includes(code) && <Check className="w-3 h-3 text-white" />}
                       </div>
                       <div className="flex items-center space-x-2 min-w-0">
-                        <div className="w-6 h-6 rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
-                          <img src={getAirlineLogo(code)} alt={code} className="w-5 h-5 object-contain"
-                            onError={(e) => { e.target.style.display = 'none'; }} />
+                        <div className="w-6 h-6 rounded overflow-hidden bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
+                          <img src={getAirlineLogo(code)} alt={code} className="w-5 h-5 object-contain" onError={(e) => { e.target.style.display = 'none'; }} />
                         </div>
                         <span className="text-sm text-gray-600 truncate">{AIRLINE_NAMES[code] || code}</span>
                       </div>
@@ -425,13 +402,11 @@ const FlightsPage = () => {
                 <h1 className="text-base sm:text-lg font-bold text-gray-800">
                   {groupedByAirline.length} airline{groupedByAirline.length !== 1 ? 's' : ''} · {filtered.length} flight{filtered.length !== 1 ? 's' : ''}
                 </h1>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">
-                  {searchParams.origin} to {searchParams.destination} · {searchParams.departureDate}
-                </p>
+                <p className="text-xs text-gray-500 mt-0.5">{searchParams.origin} to {searchParams.destination} · {searchParams.departureDate}</p>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
                 <button onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden flex items-center space-x-1.5 border border-gray-200 bg-white px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 hover:border-blue-400 transition-colors">
+                  className="lg:hidden flex items-center space-x-1.5 border border-gray-200 bg-white px-3 py-2 rounded-lg text-xs font-semibold text-gray-600">
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>Filter</span>
                   {activeFiltersCount > 0 && <span className="bg-blue-600 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">{activeFiltersCount}</span>}
@@ -439,7 +414,7 @@ const FlightsPage = () => {
                 <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
                   {['price', 'duration', 'departure'].map(s => (
                     <button key={s} onClick={() => setSortBy(s)}
-                      className={`px-2 sm:px-3 py-2 text-xs font-semibold transition-colors ${sortBy === s ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}>
+                      className={`px-2 sm:px-3 py-2 text-xs font-semibold transition-colors ${sortBy === s ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-50'}`}>
                       {s === 'price' ? 'Price' : s === 'duration' ? 'Duration' : 'Time'}
                     </button>
                   ))}
@@ -447,7 +422,6 @@ const FlightsPage = () => {
               </div>
             </div>
 
-            {/* Mobile filters */}
             {showFilters && (
               <div className="lg:hidden bg-white rounded-xl shadow-sm p-4 mb-4 border border-gray-100">
                 <div className="grid grid-cols-2 gap-4">
@@ -456,8 +430,7 @@ const FlightsPage = () => {
                     <div className="space-y-1.5">
                       {[['all', 'Any'], ['direct', 'Nonstop'], ['1stop', '1 Stop']].map(([val, label]) => (
                         <label key={val} className="flex items-center space-x-2 cursor-pointer">
-                          <input type="radio" name="stops" checked={filters.stops === val}
-                            onChange={() => setFilters(f => ({ ...f, stops: val }))} className="accent-blue-600" />
+                          <input type="radio" name="stops" checked={filters.stops === val} onChange={() => setFilters(f => ({ ...f, stops: val }))} className="accent-blue-600" />
                           <span className="text-sm text-gray-600">{label}</span>
                         </label>
                       ))}
@@ -468,8 +441,7 @@ const FlightsPage = () => {
                     <div className="space-y-1.5">
                       {airlines.map(code => (
                         <label key={code} className="flex items-center space-x-2 cursor-pointer">
-                          <input type="checkbox" checked={filters.airlines.includes(code)}
-                            onChange={() => toggleAirline(code)} className="accent-blue-600" />
+                          <input type="checkbox" checked={filters.airlines.includes(code)} onChange={() => toggleAirline(code)} className="accent-blue-600" />
                           <span className="text-sm text-gray-600 truncate">{AIRLINE_NAMES[code] || code}</span>
                         </label>
                       ))}
@@ -488,9 +460,8 @@ const FlightsPage = () => {
               </div>
             )}
 
-            {/* Airline groups */}
             <div className="space-y-4">
-              {groupedByAirline.map(([airlineCode, airlineFlights], groupIndex) => (
+              {groupedByAirline.map(([airlineCode, airlineFlights]) => (
                 <AirlineGroup
                   key={airlineCode}
                   airlineCode={airlineCode}
@@ -498,7 +469,6 @@ const FlightsPage = () => {
                   cheapestFlight={cheapestFlight}
                   fastestFlight={fastestFlight}
                   onSelect={handleSelect}
-                  defaultExpanded={groupIndex === 0}
                 />
               ))}
             </div>
@@ -511,14 +481,9 @@ const FlightsPage = () => {
                   className="mt-3 text-blue-600 text-sm font-semibold hover:underline">Clear all filters</button>
               </div>
             )}
-
           </div>
         </div>
       </div>
-    </div>
-    </div>
-    </div>
-    </div>
     </div>
   );
 };
