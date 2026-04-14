@@ -512,7 +512,6 @@ const FlightsPage = () => {
               </div>
             )}
 
-            {/* Fare Calendar */}
           </div>
         </div>
       </div>
