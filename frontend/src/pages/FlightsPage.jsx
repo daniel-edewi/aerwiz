@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useFlightStore from '../store/flightStore';
-import FareCalendar from '../components/FareCalendar';
 import {
   Plane, Clock, ArrowRight, SlidersHorizontal,
   X, ChevronDown, ChevronUp, Check, Filter
@@ -356,27 +355,7 @@ const FlightsPage = () => {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center space-x-2 text-sm font-bold text-gray-800">
-              <span>{searchParams.origin}</span>
-              <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <span>{searchParams.destination}</span>
-            </div>
-            <p className="text-xs text-gray-400 mt-0.5">{searchParams.departureDate} · {searchParams.adults || 1} adult{(searchParams.adults || 1) > 1 ? 's' : ''}</p>
-          </div>
-          <button onClick={() => navigate('/')} className="flex-shrink-0 text-xs text-blue-600 font-semibold border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-            Modify
-          </button>
-        </div>
-      </div>
-
-      {searchParams.origin && searchParams.destination && (
-        <FareCalendar
-          origin={searchParams.origin}
-          destination={searchParams.destination}
-          adults={searchParams.adults || 1}
-          isRoundTrip={searchParams.tripType === 'ROUND_TRIP'}
-          returnDate={searchParams.returnDate || ''}
-        />
-      )}
+              <span>
       <div className="max-w-7xl mx-auto px-4 py-5">
         <div className="flex gap-5">
 
