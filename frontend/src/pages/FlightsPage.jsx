@@ -516,6 +516,10 @@ const FlightsPage = () => {
         </div>
       </div>
     </div>
+    </div>
+    </div>
+    </div>
+    </div>
   );
 };
 
