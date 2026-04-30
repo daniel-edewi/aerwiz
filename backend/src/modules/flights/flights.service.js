@@ -26,7 +26,7 @@ const searchFlights = async ({ origin, destination, departureDate, returnDate, a
     departureDate,
     adults: adults || 1,
     currencyCode: currencyCode || 'NGN',
-    max: 20
+    max: 250
   };
   if (returnDate) params.returnDate = returnDate;
   if (children) params.children = children;
