@@ -9,6 +9,7 @@ import {
   Tag, X, Lock, CheckCircle
 } from 'lucide-react';
 import AirportSearch from '../components/AirportSearch';
+import PassengerSelector from '../components/common/PassengerSelector';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://aerwiz-production.up.railway.app/api';
@@ -328,15 +329,12 @@ const HomePage = () => {
                     </button>
                   )}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Passengers</label>
-                      <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
-                        <Users className="w-4 h-4 text-gray-400 mr-2" />
-                        <select value={searchParams.adults} onChange={(e) => setSearchParams({ adults: parseInt(e.target.value) })} className="w-full outline-none text-gray-700 text-sm">
-                          {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>)}
-                        </select>
-                      </div>
-                    </div>
+                    <PassengerSelector
+                      adults={searchParams.adults || 1}
+                      children={searchParams.children || 0}
+                      infants={searchParams.infants || 0}
+                      onChange={(vals) => setSearchParams(vals)}
+                    />
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Cabin Class</label>
                       <select value={searchParams.cabinClass} onChange={(e) => setSearchParams({ cabinClass: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none text-gray-700 text-sm">
