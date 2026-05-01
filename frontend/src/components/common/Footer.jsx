@@ -13,9 +13,9 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <div className="mb-4 cursor-pointer inline-block" onClick={() => navigate('/')}>
-              <svg viewBox="0 0 960 300" height="44" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
-              <text x="480" y="230" textAnchor="middle" fontFamily="system-ui,-apple-system,sans-serif" fontSize="170" fontWeight="900" letterSpacing="-4">
-                <tspan fill="white">aer</tspan><tspan fill="#93c5fd">wiz</tspan><tspan fill="#bfdbfe" fontSize="100" dy="15">.com</tspan>
+              <svg viewBox="0 0 1100 300" height="44" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
+              <text x="550" y="220" textAnchor="middle" fontFamily="system-ui,-apple-system,sans-serif" fontSize="170" fontWeight="900" letterSpacing="-4">
+                <tspan fill="white">aer</tspan><tspan fill="#93c5fd">wiz.com</tspan>
               </text>
             </svg>
             </div>
