@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Users, ChevronDown, Plus, Minus } from 'lucide-react';
+import { Users, ChevronDown, Plus, Minus, UserRound, Baby } from 'lucide-react';
 
 const PassengerSelector = ({ adults, children, infants, onChange }) => {
   const [open, setOpen] = useState(false);
@@ -69,9 +69,9 @@ const PassengerSelector = ({ adults, children, infants, onChange }) => {
 
       {open && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-3 min-w-64">
-          <Row icon="🧑" title="Adults" subtitle="Age 12+" type="adults" value={adults} />
-          <Row icon="🧒" title="Children" subtitle="Age 2–11" type="children" value={children} />
-          <Row icon="👶" title="Infants" subtitle="Under 2, on lap" type="infants" value={infants} />
+          <Row icon={<UserRound className="w-5 h-5 text-blue-600" />} title="Adults" subtitle="Age 12+" type="adults" value={adults} />
+          <Row icon={<UserRound className="w-4 h-4 text-blue-400" />} title="Children" subtitle="Age 2–11" type="children" value={children} />
+          <Row icon={<Baby className="w-5 h-5 text-blue-500" />} title="Infants" subtitle="Under 2, on lap" type="infants" value={infants} />
           <div className="mt-3 pt-2 flex items-center justify-between">
             <p className="text-xs text-gray-400">Max 9 passengers total</p>
             <button type="button" onClick={() => setOpen(false)}
