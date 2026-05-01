@@ -82,11 +82,11 @@ const Navbar = () => {
               className="flex items-center cursor-pointer flex-shrink-0"
               onClick={() => navigate('/')}
             >
-              <img
-                src="/aerwiz-logo-03.svg"
-                alt="Aerwiz"
-                className="h-10 sm:h-12 w-auto"
-              />
+              <svg viewBox="0 0 960 300" height="34" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
+                  <text x="480" y="230" textAnchor="middle" fontFamily="system-ui,-apple-system,sans-serif" fontSize="170" fontWeight="900" letterSpacing="-4">
+                    <tspan fill="#0f172a">aer</tspan><tspan fill="#2563eb">wiz</tspan><tspan fill="#94a3b8" fontSize="100" dy="15">.com</tspan>
+                  </text>
+                </svg>
             </div>
 
             {/* Desktop Nav */}

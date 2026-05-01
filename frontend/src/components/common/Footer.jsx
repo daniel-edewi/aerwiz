@@ -13,14 +13,11 @@ const Footer = () => {
           {/* Brand */}
           <div>
             <div className="mb-4 cursor-pointer inline-block" onClick={() => navigate('/')}>
-              <svg viewBox="0 0 800 300" height="48" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
-                <text x="400" y="200" textAnchor="middle"
-                  fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-                  fontSize="160" fontWeight="800" letterSpacing="-5">
-                  <tspan fill="white">aer</tspan>
-                  <tspan fill="#93c5fd">wiz</tspan>
-                </text>
-              </svg>
+              <svg viewBox="0 0 960 300" height="44" xmlns="http://www.w3.org/2000/svg" aria-label="Aerwiz">
+              <text x="480" y="230" textAnchor="middle" fontFamily="system-ui,-apple-system,sans-serif" fontSize="170" fontWeight="900" letterSpacing="-4">
+                <tspan fill="white">aer</tspan><tspan fill="#93c5fd">wiz</tspan><tspan fill="#bfdbfe" fontSize="100" dy="15">.com</tspan>
+              </text>
+            </svg>
             </div>
             <p className="text-blue-300 text-sm leading-relaxed mb-4">
               Your trusted platform for booking flights across Africa and the world at the best prices.
