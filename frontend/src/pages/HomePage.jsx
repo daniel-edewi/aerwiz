@@ -170,6 +170,8 @@ const HomePage = () => {
               destination: leg.destination.toUpperCase(),
               departureDate: leg.departureDate,
               adults: searchParams.adults,
+              children: searchParams.children || 0,
+              infants: searchParams.infants || 0,
               cabinClass: searchParams.cabinClass,
             }).then(r => r.data.data).catch(() => [])
           )
@@ -186,6 +188,8 @@ const HomePage = () => {
           departureDate: searchParams.departureDate,
           returnDate: searchParams.tripType === 'ROUND_TRIP' ? searchParams.returnDate : undefined,
           adults: searchParams.adults,
+          children: searchParams.children || 0,
+          infants: searchParams.infants || 0,
           cabinClass: searchParams.cabinClass,
         });
         results = response.data.data;

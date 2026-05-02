@@ -298,10 +298,22 @@ const BookingPage = () => {
   const [otpError, setOtpError] = useState('');
   const [lastOtpEmail, setLastOtpEmail] = useState('');
 
-  const numPassengers = searchParams.adults || 1;
-  const [passengers, setPassengers] = useState(
-    Array.from({ length: numPassengers }, (_, i) => defaultPassenger(i, selectedSeat))
-  );
+  const numAdults = searchParams.adults || 1;
+  const numChildren = searchParams.children || 0;
+  const numInfants = searchParams.infants || 0;
+  const [passengers, setPassengers] = useState(() => {
+    const pax = [];
+    for (let i = 0; i < numAdults; i++) {
+      pax.push({ ...defaultPassenger(i, selectedSeat), type: 'ADULT' });
+    }
+    for (let i = 0; i < numChildren; i++) {
+      pax.push({ ...defaultPassenger(pax.length, null), type: 'CHILD' });
+    }
+    for (let i = 0; i < numInfants; i++) {
+      pax.push({ ...defaultPassenger(pax.length, null), type: 'INFANT' });
+    }
+    return pax;
+  });
 
   const updatePassenger = (index, field, value) => {
     // Reset OTP if email changes
