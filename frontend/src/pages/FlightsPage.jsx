@@ -31,6 +31,13 @@ const getDurationMinutes = (duration) => {
   return h * 60 + m;
 };
 
+const getLayoverDuration = (arrivalAt, nextDepartureAt) => {
+  const diff = new Date(nextDepartureAt) - new Date(arrivalAt);
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+};
+
 const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
   <div className="w-full min-w-0">
     <div className="flex items-center w-full min-w-0 gap-2 sm:gap-4">
@@ -67,7 +74,14 @@ const FlightLeg = ({ seg, lastSeg, stops, duration, segments }) => (
             {stops === 0 ? 'Nonstop' : `${stops} Stop${stops > 1 ? 's' : ''}`}
           </p>
           {stops > 0 && segments && (
-            <p className="text-xs text-gray-400 truncate max-w-full">via {segments.slice(0, -1).map(s => s.arrival.iataCode).join(', ')}</p>
+            <div className="flex flex-col items-center gap-0.5 mt-0.5">
+              {segments.slice(0, -1).map((s, i) => (
+                <div key={i} className="flex items-center space-x-1">
+                  <span className="text-xs text-orange-500 font-bold">{s.arrival.iataCode}</span>
+                  <span className="text-xs text-gray-400">{getLayoverDuration(s.arrival.at, segments[i + 1].departure.at)}</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
         <div className="text-right flex-shrink-0">
