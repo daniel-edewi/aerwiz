@@ -12,6 +12,12 @@ const formatPrice = (amount) => new Intl.NumberFormat('en-NG', { style: 'currenc
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 const formatDuration = (dur) => dur?.replace('PT', '').replace('H', 'h ').replace('M', 'm') || '';
+const getLayover = (arrivalAt, nextDepartureAt) => {
+  const diff = new Date(nextDepartureAt) - new Date(arrivalAt);
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+};
 
 const COUNTRIES = [
   { code: 'NG', name: 'Nigeria' }, { code: 'GH', name: 'Ghana' }, { code: 'KE', name: 'Kenya' },
@@ -135,6 +141,16 @@ const FlightSummary = ({ segment, lastSegment, segments, stops, duration, airlin
           <p className={`text-xs mt-1 font-semibold ${stops === 0 ? 'text-green-600' : 'text-orange-500'}`}>
             {stops === 0 ? 'Direct' : `${stops} stop${stops > 1 ? 's' : ''}`}
           </p>
+          {stops > 0 && segments && (
+            <div className="flex flex-col items-center gap-0.5 mt-0.5">
+              {segments.slice(0, -1).map((s, i) => (
+                <div key={i} className="flex items-center space-x-1">
+                  <span className="text-xs text-orange-500 font-bold">{s.arrival.iataCode}</span>
+                  <span className="text-xs text-gray-400">{getLayover(s.arrival.at, segments[i + 1].departure.at)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="text-center">
           <p className="text-2xl font-bold text-gray-900">{formatTime(lastSegment.arrival.at)}</p>
@@ -161,7 +177,11 @@ const FlightSummary = ({ segment, lastSegment, segments, stops, duration, airlin
           {segments.map((seg, i) => (
             <div key={i} className="text-xs text-gray-600 mb-1">
               <p className="font-medium">{seg.departure.iataCode} to {seg.arrival.iataCode} · {formatDuration(seg.duration)}</p>
-              {i < segments.length - 1 && <p className="text-orange-500">Layover at {seg.arrival.iataCode}</p>}
+              {i < segments.length - 1 && (
+                <p className="text-orange-500 font-semibold">
+                  Layover at {seg.arrival.iataCode} · {getLayover(seg.arrival.at, segments[i + 1].departure.at)}
+                </p>
+              )}
             </div>
           ))}
         </div>
