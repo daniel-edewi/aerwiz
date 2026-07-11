@@ -23,10 +23,16 @@ const Footer = () => {
               Your trusted platform for booking flights across Africa and the world at the best prices.
             </p>
             <div className="flex space-x-3">
-              {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
-                <div key={i} className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors">
+              {[
+                { Icon: Facebook, href: 'https://web.facebook.com/profile.php?id=61566607299455' },
+                { Icon: Twitter, href: 'https://twitter.com/aerwiz' },
+                { Icon: Instagram, href: 'https://www.instagram.com/aerwiz?igsh=OWcyc3VqOWQ5eTVz&utm_source=qr' },
+                { Icon: Linkedin, href: 'https://linkedin.com/company/aerwiz' },
+              ].map(({ Icon, href }, i) => (
+                <a key={i} href={href} target="_blank" rel="noopener noreferrer"
+                  className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center hover:bg-blue-700 cursor-pointer transition-colors">
                   <Icon className="w-4 h-4 text-blue-300" />
-                </div>
+                </a>
               ))}
             </div>
           </div>

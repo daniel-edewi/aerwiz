@@ -1,5 +1,4 @@
-git remote set-url origin https://daniel-edewi@github.com/daniel-edewi/aerwiz.git
-git pushimport React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Check, MessageSquare, Clock } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
