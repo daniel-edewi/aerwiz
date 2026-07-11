@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+git remote set-url origin https://daniel-edewi@github.com/daniel-edewi/aerwiz.git
+git pushimport React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Check, MessageSquare, Clock } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -64,17 +65,12 @@ const ContactPage = () => {
 
             {/* WhatsApp quick link */}
             <a
-              href="https://wa.me/2349131658888"
+              href="https://wa.me/2348000000000"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center space-x-2 w-full text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-sm"
-              style={{background:'#25D366'}}
+              className="flex items-center justify-center space-x-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 175.216 175.552">
-                <path d="M87.6 0C39.3 0 0 39.3 0 87.6c0 15.3 4 29.7 11 42.2L0 175.6l47.1-12.3c12 6.4 25.7 10 40.5 10 48.3 0 87.6-39.3 87.6-87.6S135.9 0 87.6 0z" fill="#25D366"/>
-                <path d="M87.6 16c-39.5 0-71.6 32.1-71.6 71.6 0 13.2 3.6 25.6 9.8 36.3l-6.4 23.3 24-6.3c10.3 5.6 22.1 8.8 34.7 8.8 39.5 0 71.6-32.1 71.6-71.6S127.1 16 87.6 16z" fill="#ffffff"/>
-                <path d="M63.5 52.5c-1.5-3.4-3.2-3.5-4.6-3.6-1.2-.1-2.6-.1-4-.1s-3.6.5-5.5 2.6c-1.9 2.1-7.2 7-7.2 17.1s7.4 19.8 8.4 21.2c1 1.4 14.4 22.9 35.3 31.2 17.5 6.9 21.1 5.5 24.9 5.2 3.8-.3 12.3-5 14-9.9 1.7-4.8 1.7-9 1.2-9.9-.5-.9-1.9-1.4-4-2.4s-12.3-6.1-14.2-6.8c-1.9-.7-3.3-.5-4.6 1.4-1.3 1.9-5.1 6.4-6.2 7.7-1.1 1.3-2.3 1.5-4.2.5-1.9-.9-8.1-3-15.4-9.5-5.7-5.1-9.5-11.3-10.7-13.2-1.1-1.9-.1-2.9.8-3.9.9-.9 1.9-2.3 2.9-3.4 1-1.1 1.3-1.9 1.9-3.2.7-1.3.3-2.5-.1-3.4-.5-.9-4.4-10.8-6.2-14.8z" fill="#25D366"/>
-              </svg>
+              <MessageSquare className="w-4 h-4" />
               <span>Chat on WhatsApp</span>
             </a>
           </div>
