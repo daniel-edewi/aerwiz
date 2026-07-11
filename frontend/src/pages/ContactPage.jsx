@@ -27,8 +27,8 @@ const ContactPage = () => {
 
   const info = [
     { icon: Mail,        label: 'Email Us',        value: 'support@aerwiz.com',      sub: 'We reply within 24 hours' },
-    { icon: Phone,       label: 'Call / WhatsApp',  value: '+234 800 000 0000',       sub: 'Available 24/7' },
-    { icon: MapPin,      label: 'Office',           value: 'Lagos, Nigeria',           sub: 'By appointment only' },
+    { icon: Phone,       label: 'Call / WhatsApp',  value: '+2349131658888',       sub: 'Available 24/7' },
+    { icon: MapPin,      label: 'Office',           value: 'Abuja, Nigeria',           sub: 'By appointment only' },
     { icon: Clock,       label: 'Support Hours',    value: '24 / 7 / 365',            sub: 'Always here for you' },
   ];
 

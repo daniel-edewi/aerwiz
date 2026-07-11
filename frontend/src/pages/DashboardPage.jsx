@@ -183,7 +183,7 @@ const DashboardPage = () => {
           <div class="row"><span class="label">Total Amount</span><span class="value" style="color:#1d4ed8;">${formatPrice(booking.totalAmount)}</span></div>
           <div class="footer">
             <p>This is your official e-ticket from Aerwiz. Please present this at check-in.</p>
-            <p>support@aerwiz.com · +234 800 000 0000 · aerwiz.com</p>
+            <p>support@aerwiz.com · +2349131658888 · aerwiz.com</p>
             <p>Issued: ${new Date().toLocaleString('en-NG')}</p>
           </div>
         </div>
@@ -659,7 +659,7 @@ const DashboardPage = () => {
                     <input type="tel"
                       value={editMode ? profileForm.phone : (user?.phone || '')}
                       onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                      disabled={!editMode} placeholder="+234 800 000 0000"
+                      disabled={!editMode} placeholder="+2349131658888"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors" />
                   </div>
                   {editMode && (

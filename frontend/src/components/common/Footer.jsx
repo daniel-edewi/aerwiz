@@ -86,7 +86,7 @@ const Footer = () => {
             <div className="space-y-2 text-blue-300 text-sm">
               <div className="flex items-center space-x-2">
                 <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>+234 800 000 0000</span>
+                <span>+2349131658888</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-3.5 h-3.5 flex-shrink-0" />
@@ -94,7 +94,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Lagos, Nigeria</span>
+                <span>Abuja, Nigeria</span>
               </div>
             </div>
           </div>

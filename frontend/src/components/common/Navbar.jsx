@@ -41,7 +41,7 @@ const Navbar = () => {
 
   const announcements = [
     'Transparent pricing, secure checkout, and instant confirmations',
-    '24/7 Support: Call or WhatsApp +234 800 000 0000',
+    '24/7 Support: Call or WhatsApp +2349131658888',
   ];
 
   return (
@@ -208,7 +208,7 @@ const Navbar = () => {
                 className="w-full flex items-center space-x-3 px-3 py-2.5 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                <span>+234 800 000 0000</span>
+                <span>+2349131658888</span>
               </a>
 
               {!isAuthenticated && (

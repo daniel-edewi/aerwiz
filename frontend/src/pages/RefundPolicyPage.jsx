@@ -95,7 +95,7 @@ const RefundPolicyPage = () => (
         <p>For any refund enquiries, reach us at:</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Email: <a href="mailto:support@aerwiz.com" className="text-blue-600 hover:underline">support@aerwiz.com</a></li>
-          <li>Phone / WhatsApp: +234 800 000 0000</li>
+          <li>Phone / WhatsApp: +2349131658888</li>
           <li>Hours: 24 hours a day, 7 days a week</li>
         </ul>
         <p>Please have your booking reference number ready when you contact us.</p>
