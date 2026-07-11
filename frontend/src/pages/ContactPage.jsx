@@ -64,7 +64,7 @@ const ContactPage = () => {
 
             {/* WhatsApp quick link */}
             <a
-              href="https://wa.me/2348000000000"
+              href="https://wa.me/2349131658888"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center space-x-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-colors text-sm shadow-sm"
